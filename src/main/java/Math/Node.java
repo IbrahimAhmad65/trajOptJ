@@ -28,4 +28,8 @@ public class Node {
         this.x = magnitude * Math.cos(angle);
         this.y = magnitude * Math.sin(angle);
     }
+
+    double getMagnitude(){
+        return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    }
 }
