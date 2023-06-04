@@ -5,26 +5,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static java.lang.Math.*;
+
 
 public class RRTStar {
     private Tree tree;
-    static int Iterations = 5000;
-    static double Step_Size = .1;
-    static double thresholdForCompletion = .5;
-    static double neighborhood = 1;
+    public static int Iterations = 5000;
+    public static double Step_Size = .1;
+    public static double thresholdForCompletion = .5;
+    public static double neighborhood = 1;
     private Node goal;
     private double maxX;
     private double maxY;
     private Node goalButInList;
-    boolean test = false;
+    public boolean test = false;
     private double cMin;
-    protected int itr
+    protected int itr;
     private double width;
     private double length;
-    static double minWidthCutoffPoint = .001;
+    public static double minWidthCutoffPoint = .001;
     FileWriter writer;
     private double angleToSolution;
     private boolean hasSolution = false;
+    public List<Obstacle> obstacles = new ArrayList<Obstacle>();
 
     public List<Node> rrtStar(Node start, Node goal) {
 
@@ -57,22 +60,25 @@ public class RRTStar {
                 if (nearest.equals(goalButInList)) {
                     continue;
                 }
-                addNodeToTree(goalButInList, nearest);
-                rewire(goalButInList);
-                width = Math.sqrt(goalButInList.cost * goalButInList.cost - cMin * cMin);
-                length = goalButInList.cost;
+                addNodeWithCollisionCheck(nearest, goalButInList);
+
+
                 if (!hasSolution) {
                     hasSolution = true;
                     printPath(findPathToGoalFromTree());
 
                 }
-                if(Double.isNaN(width) || width < minWidthCutoffPoint){
-                    System.out.println(i);
+                double arg = goalButInList.cost * goalButInList.cost - cMin * cMin;
+                if (arg >= 0.0) {
+                    width = sqrt(arg);
+                } else {
+                    width = 0.0;
                     break;
                 }
+
+                length = goalButInList.cost;
             } else {
-                addNodeToTree(interpolated, nearest);
-                rewire(interpolated);
+                addNodeWithCollisionCheck(nearest, interpolated);
             }
 
         }
@@ -80,6 +86,26 @@ public class RRTStar {
             return findPathToGoalFromTree();
         }
         return null;
+    }
+
+    public void addNodeWithCollisionCheck(Node nearest, Node interpolated) {
+        boolean mustBreak = false;
+        for (Obstacle obstacle : obstacles) {
+            if (obstacle.hasCollided(interpolated, nearest)) {
+                mustBreak = true;
+                break;
+            }
+        }
+
+        if (mustBreak) {
+            System.out.println("node that has collided");
+            System.out.println("nearest: " + nearest);
+            System.out.println("interpolated: " + interpolated);
+            return;
+        }
+        System.out.println("node that hasnt collided");
+        addNodeToTree(interpolated, nearest);
+        rewire(interpolated);
     }
 
 
@@ -92,24 +118,34 @@ public class RRTStar {
         return false;
     }
 
+//    private boolean hasObstacle(Node n1, Node n2){
+//
+//    }
+
     private Node findRandomNode() {
         Random random = new Random();
         double x;
         double y;
         if (hasSolution) {
-            x = random.nextDouble() * length - (length - cMin) / 2.0;
-            y = random.nextDouble() * width - width / 2.0;
+            double r = sqrt(random.nextDouble());
+            double rho = random.nextDouble() * 2 * Math.PI;
 
-            double elipseCheck = (x-length/2)*(x-length/2)/ (length*length/4) + (y)*(y)/ (width*width/4);
-            if(elipseCheck > 1){
-                return findRandomNode();
-            }
+            x = (r * cos(rho) + 1) * length / 2.0 - (length - cMin) / 2.0;
+            y = r * sin(rho) * width / 2.0;
+
+//            x = random.nextDouble() * length - (length - cMin) / 2.0;
+//            y = random.nextDouble() * width - width / 2.0;
+//
+//            double elipseCheck = (x-length/2)*(x-length/2)/ (length*length/4) + (y)*(y)/ (width*width/4);
+//            if(elipseCheck > 1){
+//                return findRandomNode();
+//            }
 
             double theta = Math.atan2(y, x);
             theta -= angleToSolution;
-            double mag = Math.sqrt(x * x + y * y);
-            x = mag * Math.cos(theta) + tree.root.x;
-            y = mag * Math.sin(theta) + tree.root.y;
+            double mag = sqrt(x * x + y * y);
+            x = mag * cos(theta) + tree.root.x;
+            y = mag * sin(theta) + tree.root.y;
 
 
         } else {
@@ -128,6 +164,8 @@ public class RRTStar {
                 addNodeToTree(n, e);
             }
         }
+
+
     }
 
     private boolean inNeighborhood(Node n1, Node n2) {
@@ -146,8 +184,8 @@ public class RRTStar {
         return nearest;
     }
 
-    private double findDistance(Node n1, Node n2) {
-        return Math.sqrt(Math.pow(n1.x - n2.x, 2) + Math.pow(n1.y - n2.y, 2));
+    public static double findDistance(Node n1, Node n2) {
+        return sqrt(Math.pow(n1.x - n2.x, 2) + Math.pow(n1.y - n2.y, 2));
     }
 
 
@@ -199,24 +237,39 @@ public class RRTStar {
     }
 
     public static void main(String[] args) {
-        double total = 0;
-        for (int i = 0; i < 1000; i++) {
+        Vector2D c1,c2,c3,c4;
+        c1 = new Vector2D(-1,1);
+        c2 = new Vector2D(1,1);
+        c3 = new Vector2D(1,2);
+        c4 = new Vector2D(-1,2);
+
+        ArrayList<Vector2D> obstacleArrayList = new ArrayList<Vector2D>();
+        obstacleArrayList.add(c1);
+        obstacleArrayList.add(c2);
+        obstacleArrayList.add(c3);
+        obstacleArrayList.add(c4);
+
+        for (int i = 0; i < 1; i++) {
             RRTStar rrt = new RRTStar();
             rrt.tree = new Tree();
             rrt.maxX = 10;
             rrt.maxY = 10;
-            List<Node> fullPath = rrt.rrtStar( new Node(0, 0),new Node(0, 3));
-            total += rrt.itr
-        }
-
-
-        rrt.writeFullTree();
-
-
+            rrt.obstacles.add(new Obstacle(obstacleArrayList));
+            List<Node> fullPath = rrt.rrtStar(new Node(0, 0), new Node(0, 3));
         printPath(fullPath);
+        }
+//        System.out.println(total/1000.);
+
+//        rrt.writeFullTree();
+
+
 //        }
 
     }
+
+
+    // 6:09 with elipse recursion
+    // 6:02 without
 
     public static void printPath(List<Node> fullPath) {
         for (int j = 0; j < fullPath.size() - 1; j++) {

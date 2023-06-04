@@ -42,4 +42,7 @@ public class Node {
         return Double.compare(node.x, x) == 0 && Double.compare(node.y, y) == 0;
     }
 
+    public Vector2D toVector2D(){
+        return new Vector2D(x, y);
+    }
 }
