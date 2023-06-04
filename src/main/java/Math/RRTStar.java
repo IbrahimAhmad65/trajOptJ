@@ -18,15 +18,17 @@ public class RRTStar {
     private Node goalButInList;
     boolean test = false;
     private double cMin;
+    protected int itr
     private double width;
     private double length;
+    static double minWidthCutoffPoint = .001;
     FileWriter writer;
     private double angleToSolution;
     private boolean hasSolution = false;
 
     public List<Node> rrtStar(Node start, Node goal) {
 
-        cMin = findDistance(start,goal);
+        cMin = findDistance(start, goal);
         angleToSolution = Math.atan2(start.y - goal.y, start.x - goal.x);
         if (test) {
             try {
@@ -52,22 +54,26 @@ public class RRTStar {
             Node interpolated = new Node(nearest.x + delta.x, nearest.y + delta.y);
 
             if (findDistance(interpolated, goal) < thresholdForCompletion) {
-                if(!nearest.equals(goalButInList)){
-                    addNodeToTree(goalButInList, nearest);
-                    rewire(goalButInList);
-                    width = Math.sqrt(goalButInList.cost * goalButInList.cost - cMin*cMin);
-                    length = goalButInList.cost;
+                if (nearest.equals(goalButInList)) {
+                    continue;
                 }
+                addNodeToTree(goalButInList, nearest);
+                rewire(goalButInList);
+                width = Math.sqrt(goalButInList.cost * goalButInList.cost - cMin * cMin);
+                length = goalButInList.cost;
                 if (!hasSolution) {
                     hasSolution = true;
                     printPath(findPathToGoalFromTree());
 
                 }
+                if(Double.isNaN(width) || width < minWidthCutoffPoint){
+                    System.out.println(i);
+                    break;
+                }
             } else {
                 addNodeToTree(interpolated, nearest);
                 rewire(interpolated);
             }
-//            System.out.println("(" + (i / 1000.) + "," + goalButInList.cost + ")");
 
         }
         if (hasGoalBeenReached()) {
@@ -91,19 +97,21 @@ public class RRTStar {
         double x;
         double y;
         if (hasSolution) {
-//            length = 1;
-//            width = .5;
-            x = random.nextDouble() * length;
-            y = random.nextDouble() * width - width/2.0;
-            double theta = Math.atan2(y,x);
+            x = random.nextDouble() * length - (length - cMin) / 2.0;
+            y = random.nextDouble() * width - width / 2.0;
+
+            double elipseCheck = (x-length/2)*(x-length/2)/ (length*length/4) + (y)*(y)/ (width*width/4);
+            if(elipseCheck > 1){
+                return findRandomNode();
+            }
+
+            double theta = Math.atan2(y, x);
             theta -= angleToSolution;
-            double mag = Math.sqrt(x*x + y*y);
+            double mag = Math.sqrt(x * x + y * y);
             x = mag * Math.cos(theta) + tree.root.x;
             y = mag * Math.sin(theta) + tree.root.y;
 
-//            System.out.println(width + " " + length);
-//            x = random.nextDouble() * maxX;
-//            y = random.nextDouble() * maxY;
+
         } else {
             x = random.nextDouble() * maxX;
             y = random.nextDouble() * maxY;
@@ -144,13 +152,6 @@ public class RRTStar {
 
 
     private void addNodeToTree(Node n, Node nearestNode) {
-
-
-//        System.out.println("\\operatorname{polygon}\\left(\\left(" + n.x + "," + n.y + "\\right),\\left(" + nearestNode.x + "," + nearestNode.y + "\\right)\\right)");
-//        if(nearestNode.equals(goalButInList)){
-//            return;
-//        }
-
         nearestNode.neighbors.add(n);
         n.parent = nearestNode;
         n.cost = nearestNode.cost + findDistance(n, nearestNode);
@@ -167,7 +168,6 @@ public class RRTStar {
         List<Node> output = new ArrayList<Node>();
         Node current = goalButInList;
         while (current != null) {
-            System.out.println(current);
             output.add(current);
             current = current.parent;
         }
@@ -199,19 +199,22 @@ public class RRTStar {
     }
 
     public static void main(String[] args) {
-
-        RRTStar rrt = new RRTStar();
-        rrt.tree = new Tree(0, 0);
-        rrt.maxX = 10;
-        rrt.maxY = 10;
-        List<Node> fullPath = rrt.rrtStar(new Node(0, 0), new Node(0, 3));
+        double total = 0;
+        for (int i = 0; i < 1000; i++) {
+            RRTStar rrt = new RRTStar();
+            rrt.tree = new Tree();
+            rrt.maxX = 10;
+            rrt.maxY = 10;
+            List<Node> fullPath = rrt.rrtStar( new Node(0, 0),new Node(0, 3));
+            total += rrt.itr
+        }
 
 
         rrt.writeFullTree();
 
 
         printPath(fullPath);
-
+//        }
 
     }
 
@@ -219,7 +222,7 @@ public class RRTStar {
         for (int j = 0; j < fullPath.size() - 1; j++) {
             Node current = fullPath.get(j);
             Node next = fullPath.get(j + 1);
-            System.out.println("\\operatorname{polygon}\\left(\\left(" + current.x + "," + current.y + "\\right),\\left(" + next.x + "," + next.y + "\\right)\\right)");
+            System.out.println("\\operatorname{polygon}\\left(\\left(" + Math.floor(current.x*1000)/1000. + "," + Math.floor(current.y*1000)/1000 + "\\right),\\left(" + Math.floor(next.x*1000)/1000 + "," + Math.floor(next.y*1000)/1000+ "\\right)\\right)");
         }
     }
 }
