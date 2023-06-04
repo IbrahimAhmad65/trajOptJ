@@ -1,21 +1,33 @@
 package Math;
 
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 public class RRTStar {
     private Tree tree;
-    static int Iterations = 1500;
+    static int Iterations = 5000;
     static double Step_Size = .1;
-    static double thresholdForCompletion = 1;
-    static double neighborhood = .1;
+    static double thresholdForCompletion = .2;
+    static double neighborhood = 1;
     private Node goal;
     private double maxX;
     private double maxY;
     private Node goalButInList;
+    boolean test = false;
+    FileWriter writer;
+    List<Node> oldPathPreMainRewire;
 
     public List<Node> rrtStar(Node start, Node goal) {
+        if(test){
+            try {
+                writer = new FileWriter("/home/ibrahim/rrt.txt");
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
         this.goal = goal;
         this.tree.root = start;
         this.tree.root.cost = 0.0;
@@ -31,18 +43,22 @@ public class RRTStar {
             delta.setMagnitude(Math.min(Step_Size, delta.getMagnitude()));
             Node interpolated = new Node(nearest.x + delta.x, nearest.y + delta.y);
 
-
             if (findDistance(interpolated, goal) < thresholdForCompletion) {
                 addNodeToTree(goalButInList, nearest);
-//                System.out.println("\\operatorname{polygon}\\left(\\left(" + goal.x + "," + goal.y + "\\right),\\left(" + nearest.x + "," +nearest.y + "\\right)\\right)");
-                break;
+                rewire(goalButInList);
+                if(oldPathPreMainRewire == null){
+                    System.out.println(goalButInList.cost);
+                    oldPathPreMainRewire = findPathToGoalFromTree();
+                } else {
+                    System.out.println("hey");
+                }
             } else {
                 addNodeToTree(interpolated, nearest);
-//                System.out.println("\\operatorname{polygon}\\left(\\left(" + interpolated.x + "," + interpolated.y + "\\right),\\left(" + nearest.x + "," +nearest.y + "\\right)\\right)");
+                rewire(interpolated);
             }
+//            System.out.println("(" +(i/1000.) + "," + goalButInList.cost + ")");
 
         }
-        System.out.println(tree.root.parent);
         if (hasGoalBeenReached()) {
             return findPathToGoalFromTree();
         }
@@ -64,6 +80,19 @@ public class RRTStar {
         double x = random.nextDouble() * maxX;
         double y = random.nextDouble() * maxY;
         return new Node(x, y);
+    }
+
+    private void rewire(Node n){
+        List<Node> nodesInNeighborhood = findAllNodesInNeighborhood(n);
+
+        for (Node e: nodesInNeighborhood) {
+            if(e.cost + findDistance(n,e) < n.cost){
+//                System.out.println("reducing costs: new cost: " + (e.cost + findDistance(n,e)) + " old cost: " + n.cost);
+                n.parent.neighbors.remove(n);
+                addNodeToTree(n,e);
+//                System.out.println("cost of n: " + n.cost);
+            }
+        }
     }
 
     private boolean inNeighborhood(Node n1, Node n2) {
@@ -88,10 +117,18 @@ public class RRTStar {
 
 
     private void addNodeToTree(Node n, Node nearestNode) {
+
+
+//        System.out.println("\\operatorname{polygon}\\left(\\left(" + n.x + "," + n.y + "\\right),\\left(" + nearestNode.x + "," + nearestNode.y + "\\right)\\right)");
+//        if(nearestNode.equals(goalButInList)){
+//            return;
+//        }
+
         nearestNode.neighbors.add(n);
         n.parent = nearestNode;
         n.cost = nearestNode.cost + findDistance(n, nearestNode);
         tree.nodes.add(n);
+
     }
 
 
@@ -119,18 +156,39 @@ public class RRTStar {
         return output;
     }
 
+
+    private void writeFullTree(){
+        if(test){
+            for (Node n: tree.nodes) {
+                try {
+                    writer.write(n.x + "," + n.y + "," + n.cost+  ",\n");
+                    writer.flush();
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
     public static void main(String[] args) {
 
         RRTStar rrt = new RRTStar();
         rrt.tree = new Tree(0, 0);
-        rrt.maxX = 10;
-        rrt.maxY = 10;
+        rrt.maxX = 3;
+        rrt.maxY = 3;
         List<Node> fullPath = rrt.rrtStar(new Node(0, 0), new Node(0, 3));
-        for (int j = 0; j < fullPath.size() - 1; j++) {
-            Node current = fullPath.get(j);
-            Node next = fullPath.get(j + 1);
-            System.out.println("\\operatorname{polygon}\\left(\\left(" + current.x + "," + current.y + "\\right),\\left(" + next.x + "," + next.y + "\\right)\\right)");
-        }
+        System.out.println("path with rewire cost" + fullPath.get(0).cost);
+        System.out.println("path without main rewire cost" + rrt.oldPathPreMainRewire.get(0).cost);
+        System.out.println("delta: " +( fullPath.get(0).cost - rrt.oldPathPreMainRewire.get(0).cost));
+
+        rrt.writeFullTree();
+
+
+
+//        for (int j = 0; j < fullPath.size() - 1; j++) {
+//            Node current = fullPath.get(j);
+//            Node next = fullPath.get(j + 1);
+//            System.out.println("\\operatorname{polygon}\\left(\\left(" + current.x + "," + current.y + "\\right),\\left(" + next.x + "," + next.y + "\\right)\\right)");
+//        }
 
 
     }

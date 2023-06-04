@@ -2,6 +2,7 @@ package Math;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Node {
     double x;
@@ -32,4 +33,13 @@ public class Node {
     double getMagnitude(){
         return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Node node = (Node) o;
+        return Double.compare(node.x, x) == 0 && Double.compare(node.y, y) == 0;
+    }
+
 }
