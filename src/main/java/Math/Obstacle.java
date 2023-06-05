@@ -61,35 +61,35 @@ public class Obstacle {
             y = answers[1];
             Vector2D interscept = new Vector2D(x,y);
             Node intersceptNode = new Node(x,y);
-
-            System.out.println("a1 : " + a1);
-            System.out.println("a2 : " + a2);
-            System.out.println("b1 : " + b1);
-            System.out.println("b2 : " + b2);
-            System.out.println("c1 : " + c1);
-            System.out.println("c2 : " + c2);
-            System.out.println("x : " + x);
-            System.out.println("y : " + y);
-            System.out.println("corner1 : " + corner1);
-            System.out.println("corner2 : " + corner2);
-            System.out.println("n1 : " + n1);
-            System.out.println("n2 : " + n2);
-            System.out.println("interscept to corner1: " + interscept.getDistance(corner1));
-            System.out.println("interscept to corner2: " + interscept.getDistance(corner2));
-            System.out.println("corner1 to corner2: " + corner1.getDistance(corner2));
-            System.out.println("interscept to n1: " + findDistance(intersceptNode,n1));
-            System.out.println("interscept to n2: " + findDistance(intersceptNode,n2));
-            System.out.println("n1 to n2: " + findDistance(n1, n2));
-            System.out.println("total value1: " + (Math.abs(interscept.getDistance(corner1) + interscept.getDistance(corner2)  - corner1.getDistance(corner2) )));
-            System.out.println("total value2: " + (Math.abs(findDistance(intersceptNode,n1) + findDistance(intersceptNode,n2)  - findDistance(n1, n2) )));
-
-            System.out.println("total value1: " + (Math.abs(interscept.getDistance(corner1) + interscept.getDistance(corner2)  - corner1.getDistance(corner2) ) < THRESHOLD));
-            System.out.println("total value2: " + (Math.abs(findDistance(intersceptNode,n1) + findDistance(intersceptNode,n2)  - findDistance(n1, n2) ) < THRESHOLD));
+//
+//            System.out.println("a1 : " + a1);
+//            System.out.println("a2 : " + a2);
+//            System.out.println("b1 : " + b1);
+//            System.out.println("b2 : " + b2);
+//            System.out.println("c1 : " + c1);
+//            System.out.println("c2 : " + c2);
+//            System.out.println("x : " + x);
+//            System.out.println("y : " + y);
+//            System.out.println("corner1 : " + corner1);
+//            System.out.println("corner2 : " + corner2);
+//            System.out.println("n1 : " + n1);
+//            System.out.println("n2 : " + n2);
+//            System.out.println("interscept to corner1: " + interscept.getDistance(corner1));
+//            System.out.println("interscept to corner2: " + interscept.getDistance(corner2));
+//            System.out.println("corner1 to corner2: " + corner1.getDistance(corner2));
+//            System.out.println("interscept to n1: " + findDistance(intersceptNode,n1));
+//            System.out.println("interscept to n2: " + findDistance(intersceptNode,n2));
+//            System.out.println("n1 to n2: " + findDistance(n1, n2));
+//            System.out.println("total value1: " + (Math.abs(interscept.getDistance(corner1) + interscept.getDistance(corner2)  - corner1.getDistance(corner2) )));
+//            System.out.println("total value2: " + (Math.abs(findDistance(intersceptNode,n1) + findDistance(intersceptNode,n2)  - findDistance(n1, n2) )));
+//
+//            System.out.println("total value1: " + (Math.abs(interscept.getDistance(corner1) + interscept.getDistance(corner2)  - corner1.getDistance(corner2) ) < THRESHOLD));
+//            System.out.println("total value2: " + (Math.abs(findDistance(intersceptNode,n1) + findDistance(intersceptNode,n2)  - findDistance(n1, n2) ) < THRESHOLD));
 
 
             if(Double.isNaN(x) ||Double.isNaN(y)){
                 // TODO add edge case check of if the lines are the same line
-                System.out.println("NaN skip");
+//                System.out.println("NaN skip");
                 continue;
             }
 

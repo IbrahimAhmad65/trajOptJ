@@ -11,9 +11,9 @@ import static java.lang.Math.*;
 public class RRTStar {
     private Tree tree;
     public static int Iterations = 5000;
-    public static double Step_Size = .1;
-    public static double thresholdForCompletion = .5;
-    public static double neighborhood = 1;
+    public static double Step_Size = 4;
+    public static double thresholdForCompletion = 1;
+    public static double neighborhood = 9;
     private Node goal;
     private double maxX;
     private double maxY;
@@ -60,12 +60,15 @@ public class RRTStar {
                 if (nearest.equals(goalButInList)) {
                     continue;
                 }
-                addNodeWithCollisionCheck(nearest, goalButInList);
-
+                boolean unableToAddGoal = !addNodeWithCollisionCheck(nearest, goalButInList);
+                rewire(interpolated);
+                if(unableToAddGoal){
+                    continue;
+                }
 
                 if (!hasSolution) {
                     hasSolution = true;
-                    printPath(findPathToGoalFromTree());
+//                    printPath(findPathToGoalFromTree());
 
                 }
                 double arg = goalButInList.cost * goalButInList.cost - cMin * cMin;
@@ -79,6 +82,7 @@ public class RRTStar {
                 length = goalButInList.cost;
             } else {
                 addNodeWithCollisionCheck(nearest, interpolated);
+                rewire(interpolated);
             }
 
         }
@@ -88,24 +92,23 @@ public class RRTStar {
         return null;
     }
 
-    public void addNodeWithCollisionCheck(Node nearest, Node interpolated) {
-        boolean mustBreak = false;
+
+    private boolean hasCollision(Node n1, Node n2) {
         for (Obstacle obstacle : obstacles) {
-            if (obstacle.hasCollided(interpolated, nearest)) {
-                mustBreak = true;
-                break;
+            if (obstacle.hasCollided(n1, n2)) {
+                return true;
             }
         }
+        return false;
+    }
 
-        if (mustBreak) {
-            System.out.println("node that has collided");
-            System.out.println("nearest: " + nearest);
-            System.out.println("interpolated: " + interpolated);
-            return;
+    public boolean addNodeWithCollisionCheck(Node nearest, Node interpolated) {
+        if (hasCollision(nearest, interpolated)) {
+            return false;
         }
-        System.out.println("node that hasnt collided");
         addNodeToTree(interpolated, nearest);
-        rewire(interpolated);
+
+        return true;
     }
 
 
@@ -118,9 +121,6 @@ public class RRTStar {
         return false;
     }
 
-//    private boolean hasObstacle(Node n1, Node n2){
-//
-//    }
 
     private Node findRandomNode() {
         Random random = new Random();
@@ -132,22 +132,12 @@ public class RRTStar {
 
             x = (r * cos(rho) + 1) * length / 2.0 - (length - cMin) / 2.0;
             y = r * sin(rho) * width / 2.0;
-
-//            x = random.nextDouble() * length - (length - cMin) / 2.0;
-//            y = random.nextDouble() * width - width / 2.0;
-//
-//            double elipseCheck = (x-length/2)*(x-length/2)/ (length*length/4) + (y)*(y)/ (width*width/4);
-//            if(elipseCheck > 1){
-//                return findRandomNode();
-//            }
-
             double theta = Math.atan2(y, x);
             theta -= angleToSolution;
             double mag = sqrt(x * x + y * y);
             x = mag * cos(theta) + tree.root.x;
             y = mag * sin(theta) + tree.root.y;
-
-
+//            System.out.println("x: " + x + " y: " + y + " theta: " + theta + " mag: " + mag + " angleToSolution: " + angleToSolution + " length: " + length + " width: " + width + " cMin: " + cMin + "goal but in list: " + goalButInList.cost);
         } else {
             x = random.nextDouble() * maxX;
             y = random.nextDouble() * maxY;
@@ -156,10 +146,20 @@ public class RRTStar {
     }
 
     private void rewire(Node n) {
-        List<Node> nodesInNeighborhood = findAllNodesInNeighborhood(n);
+
+
+        List<Node> nodesInNeighborhood = new ArrayList<Node>();
+        for (Node node : tree.nodes) {
+            if (inNeighborhood(n, node)) {
+                nodesInNeighborhood.add(node);
+            }
+        }
+
+
+
 
         for (Node e : nodesInNeighborhood) {
-            if (e.cost + findDistance(n, e) < n.cost) {
+            if (e.cost + findDistance(n, e) < n.cost && !hasCollision(n, e)) {
                 n.parent.neighbors.remove(n);
                 addNodeToTree(n, e);
             }
@@ -175,6 +175,7 @@ public class RRTStar {
     private Node findNearestNode(Node n) {
         double minDist = Double.POSITIVE_INFINITY;
         Node nearest = null;
+
         for (Node node : tree.nodes) {
             if (findDistance(node, n) < minDist) {
                 nearest = node;
@@ -237,11 +238,13 @@ public class RRTStar {
     }
 
     public static void main(String[] args) {
-        Vector2D c1,c2,c3,c4;
-        c1 = new Vector2D(-1,1);
-        c2 = new Vector2D(1,1);
-        c3 = new Vector2D(1,2);
-        c4 = new Vector2D(-1,2);
+        Vector2D shift = new Vector2D(8.276, 3.914);
+
+        Vector2D c1, c2, c3, c4;
+        c1 = new Vector2D(-5.33, -0.0).add(shift.clone());
+        c2 = new Vector2D(-3.29, -0.0).add(shift.clone());
+        c3 = new Vector2D(-3.28, -2.48).add(shift.clone());
+        c4 = new Vector2D(-5.34, -2.48).add(shift.clone());
 
         ArrayList<Vector2D> obstacleArrayList = new ArrayList<Vector2D>();
         obstacleArrayList.add(c1);
@@ -249,33 +252,47 @@ public class RRTStar {
         obstacleArrayList.add(c3);
         obstacleArrayList.add(c4);
 
-        for (int i = 0; i < 1; i++) {
+        ArrayList<Vector2D> obstacleArrayList2 = new ArrayList<Vector2D>();
+        c1 = new Vector2D(5.33, -0.0).add(shift.clone());
+        c2 = new Vector2D(3.29, -0.0).add(shift.clone());
+        c3 = new Vector2D(3.28, -2.48).add(shift.clone());
+        c4 = new Vector2D(5.34, -2.48).add(shift.clone());
+        obstacleArrayList2.add(c1);
+        obstacleArrayList2.add(c2);
+        obstacleArrayList2.add(c3);
+        obstacleArrayList2.add(c4);
+
+        ArrayList<Vector2D> obstacleArrayList3 = new ArrayList<Vector2D>();
+        c1 = new Vector2D(-12, 1.4).add(shift.clone());
+        c2 = new Vector2D(-4.93, 1.413).add(shift.clone());
+        obstacleArrayList3.add(c1);
+        obstacleArrayList3.add(c2);
+
+        ArrayList<Vector2D> obstacleArrayList4 = new ArrayList<Vector2D>();
+        c1 = new Vector2D(12, 1.4).add(shift.clone());
+        c2 = new Vector2D(4.93, 1.413).add(shift.clone());
+        obstacleArrayList4.add(c1);
+        obstacleArrayList4.add(c2);
+        List<Node> fullPath = new ArrayList<Node>();
+        for (int i = 0; i < 100; i++) {
             RRTStar rrt = new RRTStar();
             rrt.tree = new Tree();
-            rrt.maxX = 10;
-            rrt.maxY = 10;
+            rrt.maxX = 16.5;
+            rrt.maxY = 8;
             rrt.obstacles.add(new Obstacle(obstacleArrayList));
-            List<Node> fullPath = rrt.rrtStar(new Node(0, 0), new Node(0, 3));
-        printPath(fullPath);
+            rrt.obstacles.add(new Obstacle(obstacleArrayList2));
+            rrt.obstacles.add(new Obstacle(obstacleArrayList3));
+            rrt.obstacles.add(new Obstacle(obstacleArrayList4));
+            fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(15.59, 5.84));
         }
-//        System.out.println(total/1000.);
-
-//        rrt.writeFullTree();
-
-
-//        }
-
+        printPath(fullPath);
     }
-
-
-    // 6:09 with elipse recursion
-    // 6:02 without
 
     public static void printPath(List<Node> fullPath) {
         for (int j = 0; j < fullPath.size() - 1; j++) {
             Node current = fullPath.get(j);
             Node next = fullPath.get(j + 1);
-            System.out.println("\\operatorname{polygon}\\left(\\left(" + Math.floor(current.x*1000)/1000. + "," + Math.floor(current.y*1000)/1000 + "\\right),\\left(" + Math.floor(next.x*1000)/1000 + "," + Math.floor(next.y*1000)/1000+ "\\right)\\right)");
+            System.out.println("\\operatorname{polygon}\\left(\\left(" + Math.floor(current.x * 1000) / 1000. + "," + Math.floor(current.y * 1000) / 1000 + "\\right),\\left(" + Math.floor(next.x * 1000) / 1000 + "," + Math.floor(next.y * 1000) / 1000 + "\\right)\\right)");
         }
     }
 }
