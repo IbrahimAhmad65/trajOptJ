@@ -1,4 +1,7 @@
-package Math;
+package Math.RRT;
+
+import Math.Common.Vector2D;
+import edu.wpi.first.math.geometry.Translation2d;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,5 +46,9 @@ public class Node {
 
     public Vector2D toVector2D(){
         return new Vector2D(x, y);
+    }
+
+    public Translation2d toTranslation2d(){
+        return new Translation2d(x, y);
     }
 }

@@ -1,9 +1,12 @@
-package Math;
+package Math.RRT;
+
+import Math.Common.Matrix;
+import Math.Common.Vector2D;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static Math.RRTStar.findDistance;
+import static Math.RRT.RRTStar.findDistance;
 
 public class Obstacle {
 

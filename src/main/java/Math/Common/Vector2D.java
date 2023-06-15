@@ -1,12 +1,14 @@
-package Math;
+package Math.Common;
+
+import edu.wpi.first.math.geometry.Pose2d;
 
 import java.util.Objects;
 
 public class  Vector2D {
 
     // Data in this class is stored in cartesian coordinates
-    protected double x;
-    protected double y;
+    public double x;
+    public double y;
 
     // Nothing gets passed into constructor
     public Vector2D() {
@@ -15,6 +17,13 @@ public class  Vector2D {
 
     public Vector2D(double x, double y) {
         setXY(x, y);
+    }
+
+    public Vector2D(Vector2D vector2D) {
+        set(vector2D);
+    }
+    public Vector2D (Pose2d pose2d){
+        setXY(pose2d.getX(), pose2d.getY());
     }
 
     public Vector2D(Vector2D v1, Vector2D v2) {

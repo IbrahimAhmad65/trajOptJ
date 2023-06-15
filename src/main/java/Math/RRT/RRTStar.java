@@ -1,4 +1,12 @@
-package Math;
+package Math.RRT;
+
+import Math.Common.Vector2D;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.spline.CubicHermiteSpline;
+import edu.wpi.first.math.spline.Spline;
+import edu.wpi.first.math.spline.SplineHelper;
 
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -11,7 +19,7 @@ import static java.lang.Math.*;
 public class RRTStar {
     private Tree tree;
     public static int Iterations = 5000;
-    public static double Step_Size = 4;
+    public static double Step_Size = .5;
     public static double thresholdForCompletion = 1;
     public static double neighborhood = 9;
     private Node goal;
@@ -61,8 +69,7 @@ public class RRTStar {
                     continue;
                 }
                 boolean unableToAddGoal = !addNodeWithCollisionCheck(nearest, goalButInList);
-                rewire(interpolated);
-                if(unableToAddGoal){
+                if (unableToAddGoal) {
                     continue;
                 }
 
@@ -82,7 +89,6 @@ public class RRTStar {
                 length = goalButInList.cost;
             } else {
                 addNodeWithCollisionCheck(nearest, interpolated);
-                rewire(interpolated);
             }
 
         }
@@ -103,11 +109,16 @@ public class RRTStar {
     }
 
     public boolean addNodeWithCollisionCheck(Node nearest, Node interpolated) {
+        if (hasSolution && findDistance(interpolated, goalButInList) + nearest.cost + findDistance(interpolated, nearest) > goalButInList.cost) {
+            return false;
+        }
         if (hasCollision(nearest, interpolated)) {
             return false;
         }
-        addNodeToTree(interpolated, nearest);
 
+
+        addNodeToTree(interpolated, nearest);
+        rewire(interpolated);
         return true;
     }
 
@@ -146,17 +157,7 @@ public class RRTStar {
     }
 
     private void rewire(Node n) {
-
-
-        List<Node> nodesInNeighborhood = new ArrayList<Node>();
-        for (Node node : tree.nodes) {
-            if (inNeighborhood(n, node)) {
-                nodesInNeighborhood.add(node);
-            }
-        }
-
-
-
+        List<Node> nodesInNeighborhood = findAllNodesInNeighborhood(n);
 
         for (Node e : nodesInNeighborhood) {
             if (e.cost + findDistance(n, e) < n.cost && !hasCollision(n, e)) {
@@ -237,6 +238,14 @@ public class RRTStar {
         }
     }
 
+    public static void printPath(List<Node> fullPath) {
+        for (int j = 0; j < fullPath.size() - 1; j++) {
+            Node current = fullPath.get(j);
+            Node next = fullPath.get(j + 1);
+            System.out.println("\\operatorname{polygon}\\left(\\left(" + Math.floor(current.x * 1000) / 1000. + "," + Math.floor(current.y * 1000) / 1000 + "\\right),\\left(" + Math.floor(next.x * 1000) / 1000 + "," + Math.floor(next.y * 1000) / 1000 + "\\right)\\right)");
+        }
+    }
+
     public static void main(String[] args) {
         Vector2D shift = new Vector2D(8.276, 3.914);
 
@@ -274,7 +283,10 @@ public class RRTStar {
         obstacleArrayList4.add(c1);
         obstacleArrayList4.add(c2);
         List<Node> fullPath = new ArrayList<Node>();
-        for (int i = 0; i < 100; i++) {
+
+        CubicHermiteSpline[] arr = null;
+        for (int i = 0; i < 1000; i++) {
+
             RRTStar rrt = new RRTStar();
             rrt.tree = new Tree();
             rrt.maxX = 16.5;
@@ -283,17 +295,36 @@ public class RRTStar {
             rrt.obstacles.add(new Obstacle(obstacleArrayList2));
             rrt.obstacles.add(new Obstacle(obstacleArrayList3));
             rrt.obstacles.add(new Obstacle(obstacleArrayList4));
-            fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(15.59, 5.84));
-        }
-        printPath(fullPath);
-    }
 
-    public static void printPath(List<Node> fullPath) {
-        for (int j = 0; j < fullPath.size() - 1; j++) {
-            Node current = fullPath.get(j);
-            Node next = fullPath.get(j + 1);
-            System.out.println("\\operatorname{polygon}\\left(\\left(" + Math.floor(current.x * 1000) / 1000. + "," + Math.floor(current.y * 1000) / 1000 + "\\right),\\left(" + Math.floor(next.x * 1000) / 1000 + "," + Math.floor(next.y * 1000) / 1000 + "\\right)\\right)");
+
+            fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(15.59, 5.84));
+
+//        Pose2d start = new Pose2d(fullPath.get(0).toTranslation2d(), Rotation2d.fromRadians(atan2(fullPath.get(1).y - fullPath.get(0).y, fullPath.get(1).x - fullPath.get(0).x)));
+//        Pose2d end = new Pose2d(fullPath.get(fullPath.size() -1).toTranslation2d(), Rotation2d.fromRadians(atan2(fullPath.get(fullPath.size() - 1).y - fullPath.get(fullPath.size() - 2).y, fullPath.get(fullPath.size() - 1).x - fullPath.get(fullPath.size() - 2).x)));
+            Translation2d[] interiorWaypoints = new Translation2d[fullPath.size() - 2];
+            for (int j = 0; j < interiorWaypoints.length; j++) {
+                interiorWaypoints[j] = fullPath.get(j + 1).toTranslation2d();
+            }
+            double[] array1 = new double[]{fullPath.get(0).x, fullPath.get(1).x - fullPath.get(0).x};
+            double[] array2 = new double[]{fullPath.get(0).y, fullPath.get(1).y - fullPath.get(0).y};
+
+            Spline.ControlVector start = new Spline.ControlVector(array1, array2);
+
+            array1 = new double[]{fullPath.get(fullPath.size() - 1).x, fullPath.get(fullPath.size() - 1).x - fullPath.get(fullPath.size() - 2).x};
+            array2 = new double[]{fullPath.get(fullPath.size() - 1).y, fullPath.get(fullPath.size() - 1).y - fullPath.get(fullPath.size() - 2).y};
+
+            Spline.ControlVector end = new Spline.ControlVector(array1, array2);
+            arr = SplineHelper.getCubicSplinesFromControlVectors(start, interiorWaypoints, end);
         }
+
+
+        for (CubicHermiteSpline spline : arr) {
+            for (int i = 0; i < 1000; i++) {
+                System.out.println(new Vector2D( spline.getPoint(i / 1000.0).poseMeters));
+            }
+        }
+//
+//        printPath(fullPath);
     }
 }
 
