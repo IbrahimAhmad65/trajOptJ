@@ -1,8 +1,6 @@
 package Math.RRT;
 
 import Math.Common.Vector2D;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.spline.CubicHermiteSpline;
 import edu.wpi.first.math.spline.Spline;
@@ -16,12 +14,12 @@ import java.util.Random;
 import static java.lang.Math.*;
 
 
-public class RRTStar {
+public class InformedRRTStar {
     private Tree tree;
     public static int Iterations = 5000;
     public static double Step_Size = .5;
     public static double thresholdForCompletion = 1;
-    public static double neighborhood = 9;
+    public static double neighborhood = 1000;
     private Node goal;
     private double maxX;
     private double maxY;
@@ -285,9 +283,9 @@ public class RRTStar {
         List<Node> fullPath = new ArrayList<Node>();
 
         CubicHermiteSpline[] arr = null;
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 1; i++) {
 
-            RRTStar rrt = new RRTStar();
+            InformedRRTStar rrt = new InformedRRTStar();
             rrt.tree = new Tree();
             rrt.maxX = 16.5;
             rrt.maxY = 8;
@@ -305,13 +303,19 @@ public class RRTStar {
             for (int j = 0; j < interiorWaypoints.length; j++) {
                 interiorWaypoints[j] = fullPath.get(j + 1).toTranslation2d();
             }
-            double[] array1 = new double[]{fullPath.get(0).x, fullPath.get(1).x - fullPath.get(0).x};
-            double[] array2 = new double[]{fullPath.get(0).y, fullPath.get(1).y - fullPath.get(0).y};
+            double velScale = 0;
+            double theta1 = atan2(fullPath.get(1).y - fullPath.get(0).y, fullPath.get(1).x - fullPath.get(0).x);
+
+            double[] array1 = new double[]{fullPath.get(0).x, velScale * (cos(theta1))};
+            double[] array2 = new double[]{fullPath.get(0).y, velScale * (sin(theta1))};
 
             Spline.ControlVector start = new Spline.ControlVector(array1, array2);
 
-            array1 = new double[]{fullPath.get(fullPath.size() - 1).x, fullPath.get(fullPath.size() - 1).x - fullPath.get(fullPath.size() - 2).x};
-            array2 = new double[]{fullPath.get(fullPath.size() - 1).y, fullPath.get(fullPath.size() - 1).y - fullPath.get(fullPath.size() - 2).y};
+            double theta2 = atan2(fullPath.get(fullPath.size() - 1).y - fullPath.get(fullPath.size() - 2).y, fullPath.get(fullPath.size() - 1).x - fullPath.get(fullPath.size() - 2).x);
+            velScale = 0;
+
+            array1 = new double[]{fullPath.get(fullPath.size() - 1).x,  velScale * (cos(theta2))};
+            array2 = new double[]{fullPath.get(fullPath.size() - 1).y, velScale *  velScale * (sin(theta2))};
 
             Spline.ControlVector end = new Spline.ControlVector(array1, array2);
             arr = SplineHelper.getCubicSplinesFromControlVectors(start, interiorWaypoints, end);
@@ -324,7 +328,7 @@ public class RRTStar {
             }
         }
 //
-//        printPath(fullPath);
+        printPath(fullPath);
     }
 }
 

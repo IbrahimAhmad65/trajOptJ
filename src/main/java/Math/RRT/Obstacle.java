@@ -6,7 +6,7 @@ import Math.Common.Vector2D;
 import java.util.ArrayList;
 import java.util.List;
 
-import static Math.RRT.RRTStar.findDistance;
+import static Math.RRT.InformedRRTStar.findDistance;
 
 public class Obstacle {
 
