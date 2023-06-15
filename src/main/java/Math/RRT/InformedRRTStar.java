@@ -1,8 +1,12 @@
 package Math.RRT;
 
+import Math.Common.Matrix;
 import Math.Common.Vector2D;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.spline.CubicHermiteSpline;
+import edu.wpi.first.math.spline.QuinticHermiteSpline;
 import edu.wpi.first.math.spline.Spline;
 import edu.wpi.first.math.spline.SplineHelper;
 
@@ -282,7 +286,7 @@ public class InformedRRTStar {
         obstacleArrayList4.add(c2);
         List<Node> fullPath = new ArrayList<Node>();
 
-        CubicHermiteSpline[] arr = null;
+        Spline[] arr = null;
         for (int i = 0; i < 1; i++) {
 
             InformedRRTStar rrt = new InformedRRTStar();
@@ -296,37 +300,98 @@ public class InformedRRTStar {
 
 
             fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(15.59, 5.84));
+            // Why is FRC Math so hard
 
-//        Pose2d start = new Pose2d(fullPath.get(0).toTranslation2d(), Rotation2d.fromRadians(atan2(fullPath.get(1).y - fullPath.get(0).y, fullPath.get(1).x - fullPath.get(0).x)));
-//        Pose2d end = new Pose2d(fullPath.get(fullPath.size() -1).toTranslation2d(), Rotation2d.fromRadians(atan2(fullPath.get(fullPath.size() - 1).y - fullPath.get(fullPath.size() - 2).y, fullPath.get(fullPath.size() - 1).x - fullPath.get(fullPath.size() - 2).x)));
-            Translation2d[] interiorWaypoints = new Translation2d[fullPath.size() - 2];
-            for (int j = 0; j < interiorWaypoints.length; j++) {
-                interiorWaypoints[j] = fullPath.get(j + 1).toTranslation2d();
-            }
-            double velScale = 0;
-            double theta1 = atan2(fullPath.get(1).y - fullPath.get(0).y, fullPath.get(1).x - fullPath.get(0).x);
 
-            double[] array1 = new double[]{fullPath.get(0).x, velScale * (cos(theta1))};
-            double[] array2 = new double[]{fullPath.get(0).y, velScale * (sin(theta1))};
+            //            double[][] data1 = new double[][]{
+//                    {0,0,1},
+//                    {1,1,1},
+//                    {4,2,1}
+//            };
+//            double[][] data2 = new double[][]{
+//                    {0,0,1},
+//                    {1,1,1},
+//                    {4,2,1}
+//            };
+//            Matrix x = new Matrix(data1);
+//            Matrix y = new Matrix(data2);
+//            double[] solve1 = new double[]{fullPath.get(0).x, fullPath.get(1).x, fullPath.get(2).x};
+//            double[] solve2 = new double[]{fullPath.get(0).y, fullPath.get(1).y, fullPath.get(2).y};
+//            double[] out1 = Matrix.solve(x, solve1);
+//            double[] out2 = Matrix.solve(y, solve2);
+//
+//            for (int j = 0; j < 2000; j++) {
+//                double t = j / 1000.;
+//                double x1 = out1[0] * t * t + out1[1] * t + out1[2];
+//                double y1 = out2[0] * t * t + out2[1] * t + out2[2];
+////                System.out.println(new Vector2D(x1, y1));
+//            }
 
-            Spline.ControlVector start = new Spline.ControlVector(array1, array2);
+//            Translation2d[] interiorWaypoints = new Translation2d[fullPath.size() - 2];
+//            for (int j = 0; j < interiorWaypoints.length; j++) {
+//                interiorWaypoints[j] = fullPath.get(j + 1).toTranslation2d();
+//            }
+//            double velScale = 1;
+//            double theta1 = atan2(fullPath.get(1).y - fullPath.get(0).y, fullPath.get(1).x - fullPath.get(0).x);
+//
+//            double[] array1 = new double[]{fullPath.get(0).x, velScale * (cos(theta1))};
+//            double[] array2 = new double[]{fullPath.get(0).y, velScale * (sin(theta1))};
+//
+//            Spline.ControlVector start = new Spline.ControlVector(array1, array2);
+//
+//            double theta2 = atan2(fullPath.get(fullPath.size() - 1).y - fullPath.get(fullPath.size() - 2).y, fullPath.get(fullPath.size() - 1).x - fullPath.get(fullPath.size() - 2).x);
+//            velScale = 2;
+//
+//            array1 = new double[]{fullPath.get(fullPath.size() - 1).x,  velScale * (cos(theta2))};
+//            array2 = new double[]{fullPath.get(fullPath.size() - 1).y, velScale *  velScale * (sin(theta2))};
+//
+//            Spline.ControlVector end = new Spline.ControlVector(array1, array2);
+//            arr = SplineHelper.getCubicSplinesFromControlVectors(start, interiorWaypoints, end);
 
-            double theta2 = atan2(fullPath.get(fullPath.size() - 1).y - fullPath.get(fullPath.size() - 2).y, fullPath.get(fullPath.size() - 1).x - fullPath.get(fullPath.size() - 2).x);
-            velScale = 0;
 
-            array1 = new double[]{fullPath.get(fullPath.size() - 1).x,  velScale * (cos(theta2))};
-            array2 = new double[]{fullPath.get(fullPath.size() - 1).y, velScale *  velScale * (sin(theta2))};
 
-            Spline.ControlVector end = new Spline.ControlVector(array1, array2);
-            arr = SplineHelper.getCubicSplinesFromControlVectors(start, interiorWaypoints, end);
+
+
+//            List<Pose2d> array = new ArrayList<>();
+//            for (int j = 0; j < fullPath.size(); j++) {
+//                double theta = -5;
+//                System.out.println(j);
+//                if(j == 0){
+//                    theta = atan2(fullPath.get(j + 1).y - fullPath.get(j).y, fullPath.get(j + 1).x - fullPath.get(j).x);
+//                }
+//                if (j == fullPath.size() - 1 ){
+//                    theta = atan2(fullPath.get(j).y - fullPath.get(j-1).y, fullPath.get(j).x - fullPath.get(j-1).x);
+//
+//                }
+//                if(theta == -5d){
+//                    double theta1 = atan2(fullPath.get(j + 1).y - fullPath.get(j).y, fullPath.get(j + 1).x - fullPath.get(j).x);
+//                    double theta2 = atan2(fullPath.get(j).y - fullPath.get(j-1).y, fullPath.get(j).x - fullPath.get(j-1).x);
+//                    theta = .5 * (theta1 + theta2);
+//                }
+////                if(j < fullPath.size() -1 ){
+////                    theta1 = atan2(fullPath.get(j + 1).y - fullPath.get(j).y, fullPath.get(j + 1).x - fullPath.get(j).x);
+////                } else {
+////                    theta1 = atan2(fullPath.get(j).y - fullPath.get(j-1).y, fullPath.get(j).x - fullPath.get(j-1).x);
+////
+////                }
+//
+//                array.add(new Pose2d(fullPath.get(j).toTranslation2d(), Rotation2d.fromRadians(theta)));
+//            }
+//            Spline.ControlVector[] controlVectors = new Spline.ControlVector[array.size()];
+//            for (int j = 0; j < controlVectors.length; j++) {
+//                controlVectors[j] = new Spline.ControlVector(new double[]{array.get(j).getTranslation().getX(), 0,0}, new double[]{array.get(j).getTranslation().getY(), 0,0});
+//            }
+//
+//            arr = SplineHelper.getQuinticSplinesFromWaypoints(array);
+
         }
+//        for (Spline spline : arr) {
+//            for (int i = 0; i < 1000; i++) {
+//                System.out.println(new Vector2D(spline.getPoint(i / 1000.0).poseMeters));
+//            }
+//        }
 
 
-        for (CubicHermiteSpline spline : arr) {
-            for (int i = 0; i < 1000; i++) {
-                System.out.println(new Vector2D( spline.getPoint(i / 1000.0).poseMeters));
-            }
-        }
 //
         printPath(fullPath);
     }
