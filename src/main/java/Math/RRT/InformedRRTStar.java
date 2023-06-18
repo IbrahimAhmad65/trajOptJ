@@ -1,5 +1,7 @@
 package Math.RRT;
 
+import Math.Common.Function;
+import Math.Common.Function2Args;
 import Math.Common.Matrix;
 import Math.Common.Vector2D;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -289,17 +291,77 @@ public class InformedRRTStar {
         Spline[] arr = null;
         for (int i = 0; i < 1; i++) {
 
-            InformedRRTStar rrt = new InformedRRTStar();
-            rrt.tree = new Tree();
-            rrt.maxX = 16.5;
-            rrt.maxY = 8;
-            rrt.obstacles.add(new Obstacle(obstacleArrayList));
-            rrt.obstacles.add(new Obstacle(obstacleArrayList2));
-            rrt.obstacles.add(new Obstacle(obstacleArrayList3));
-            rrt.obstacles.add(new Obstacle(obstacleArrayList4));
+//            InformedRRTStar rrt = new InformedRRTStar();
+//            rrt.tree = new Tree();
+//            rrt.maxX = 16.5;
+//            rrt.maxY = 8;
+//            rrt.obstacles.add(new Obstacle(obstacleArrayList));
+//            rrt.obstacles.add(new Obstacle(obstacleArrayList2));
+//            rrt.obstacles.add(new Obstacle(obstacleArrayList3));
+//            rrt.obstacles.add(new Obstacle(obstacleArrayList4));
+//
+//
+//            fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(15.59, 5.84));
+//
+//            //Bezier
+//            // Cubic
+//            // B(t) = (1-t)^3 P0 + 3 * (1-t)^2 * tP1 + 3*(1-t)t^2P2 + t^3p3
+//
+            Function2Args<Double, Vector2D[], Vector2D> bezierCubic = (t,p) ->{
+                Vector2D p0 = p[0];
+                Vector2D p1 = p[1];
+                Vector2D p2 = p[2];
+                Vector2D p3 = p[3];
+                // using pow for cleanliness, will change later
+                double minusTSquared = Math.pow((1-t),2);
+                double minusTcubed = Math.pow((1-t),3);
+                return p0.scale(minusTcubed).add(p1.scale(3*minusTSquared * t)).add(p2.scale( 3* (1-t) * t*t)).add(p3.scale(t*t*t));
+            };
+
+            Vector2D p0 = new Vector2D();
+            Vector2D p1 = new Vector2D(1,4);
+            Vector2D p2 = new Vector2D(2,-4);
+            Vector2D p3 = new Vector2D(3,3);
+            for (double j = 0; j < 1; j+=.01) {
+                System.out.println(bezierCubic.compute(j,new Vector2D[]{p0.clone(),p1.clone(),p2.clone(),p3.clone()}));
+            }
 
 
-            fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(15.59, 5.84));
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
             // Why is FRC Math so hard
 
 
