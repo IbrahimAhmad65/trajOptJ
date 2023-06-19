@@ -40,9 +40,12 @@ public class InformedRRTStar {
     private double angleToSolution;
     private boolean hasSolution = false;
     public List<Obstacle> obstacles = new ArrayList<Obstacle>();
+    // fixed node pool 2:16
+    // non fixed node pool 2:15
+    private FixedNodePool fixedNodePool;
 
-    public List<Node> rrtStar(Node start, Node goal) {
-
+    public List<Node> rrtStar(Node start, Node goal, FixedNodePool fixedNodePool) {
+        this.fixedNodePool = fixedNodePool;
         cMin = findDistance(start, goal);
         angleToSolution = Math.atan2(start.y - goal.y, start.x - goal.x);
         if (test) {
@@ -57,15 +60,20 @@ public class InformedRRTStar {
         this.tree.root = start;
         this.tree.root.cost = 0.0;
         this.tree.nodes.add(start);
-
+//        System.out.println("using fixed node pool to summon goal in list");
         goalButInList = new Node(goal.x, goal.y);
 
         for (int i = 0; i < Iterations; i++) {
+//            System.out.println("iteration: " + i);
+//            System.out.println("eee");
+//            System.out.println(fixedNodePool.head);
             Node random = findRandomNode();
             Node nearest = findNearestNode(random);
+//            System.out.println("using fixed node pool to summon delta node");
             Node delta = new Node(random.x - nearest.x, random.y - nearest.y);
 
             delta.setMagnitude(Math.min(Step_Size, delta.getMagnitude()));
+//            System.out.println("using fixed node pool to summon interpolated node in list");
             Node interpolated = new Node(nearest.x + delta.x, nearest.y + delta.y);
 
             if (findDistance(interpolated, goal) < thresholdForCompletion) {
@@ -157,6 +165,7 @@ public class InformedRRTStar {
             x = random.nextDouble() * maxX;
             y = random.nextDouble() * maxY;
         }
+//        System.out.println("using fixed node pool to summon random node");
         return new Node(x, y);
     }
 
@@ -165,7 +174,6 @@ public class InformedRRTStar {
 
         for (Node e : nodesInNeighborhood) {
             if (e.cost + findDistance(n, e) < n.cost && !hasCollision(n, e)) {
-                n.parent.neighbors.remove(n);
                 addNodeToTree(n, e);
             }
         }
@@ -196,7 +204,6 @@ public class InformedRRTStar {
 
 
     private void addNodeToTree(Node n, Node nearestNode) {
-        nearestNode.neighbors.add(n);
         n.parent = nearestNode;
         n.cost = nearestNode.cost + findDistance(n, nearestNode);
         tree.nodes.add(n);
@@ -289,42 +296,46 @@ public class InformedRRTStar {
         List<Node> fullPath = new ArrayList<Node>();
 
         Spline[] arr = null;
-        for (int i = 0; i < 1; i++) {
+        FixedNodePool fixedNodePool = new FixedNodePool(15010);
+        for (int i = 0; i < 10000; i++) {
 
-//            InformedRRTStar rrt = new InformedRRTStar();
-//            rrt.tree = new Tree();
-//            rrt.maxX = 16.5;
-//            rrt.maxY = 8;
-//            rrt.obstacles.add(new Obstacle(obstacleArrayList));
-//            rrt.obstacles.add(new Obstacle(obstacleArrayList2));
-//            rrt.obstacles.add(new Obstacle(obstacleArrayList3));
-//            rrt.obstacles.add(new Obstacle(obstacleArrayList4));
-//
-//
-//            fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(15.59, 5.84));
+            InformedRRTStar rrt = new InformedRRTStar();
+            rrt.tree = new Tree();
+            rrt.maxX = 16.5;
+            rrt.maxY = 8;
+            rrt.obstacles.add(new Obstacle(obstacleArrayList));
+            rrt.obstacles.add(new Obstacle(obstacleArrayList2));
+            rrt.obstacles.add(new Obstacle(obstacleArrayList3));
+            rrt.obstacles.add(new Obstacle(obstacleArrayList4));
+
+
+            fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(15.59, 5.84), fixedNodePool);
+//            System.out.println(fixedNodePool.head);
+//            System.out.println("here");
+            fixedNodePool.reset();
 //
 //            //Bezier
 //            // Cubic
 //            // B(t) = (1-t)^3 P0 + 3 * (1-t)^2 * tP1 + 3*(1-t)t^2P2 + t^3p3
 //
-            Function2Args<Double, Vector2D[], Vector2D> bezierCubic = (t,p) ->{
-                Vector2D p0 = p[0];
-                Vector2D p1 = p[1];
-                Vector2D p2 = p[2];
-                Vector2D p3 = p[3];
-                // using pow for cleanliness, will change later
-                double minusTSquared = Math.pow((1-t),2);
-                double minusTcubed = Math.pow((1-t),3);
-                return p0.scale(minusTcubed).add(p1.scale(3*minusTSquared * t)).add(p2.scale( 3* (1-t) * t*t)).add(p3.scale(t*t*t));
-            };
-
-            Vector2D p0 = new Vector2D();
-            Vector2D p1 = new Vector2D(1,4);
-            Vector2D p2 = new Vector2D(2,-4);
-            Vector2D p3 = new Vector2D(3,3);
-            for (double j = 0; j < 1; j+=.01) {
-                System.out.println(bezierCubic.compute(j,new Vector2D[]{p0.clone(),p1.clone(),p2.clone(),p3.clone()}));
-            }
+//            Function2Args<Double, Vector2D[], Vector2D> bezierCubic = (t,p) ->{
+//                Vector2D p0 = p[0];
+//                Vector2D p1 = p[1];
+//                Vector2D p2 = p[2];
+//                Vector2D p3 = p[3];
+//                // using pow for cleanliness, will change later
+//                double minusTSquared = Math.pow((1-t),2);
+//                double minusTcubed = Math.pow((1-t),3);
+//                return p0.scale(minusTcubed).add(p1.scale(3*minusTSquared * t)).add(p2.scale( 3* (1-t) * t*t)).add(p3.scale(t*t*t));
+//            };
+//
+//            Vector2D p0 = new Vector2D();
+//            Vector2D p1 = new Vector2D(1,4);
+//            Vector2D p2 = new Vector2D(2,-4);
+//            Vector2D p3 = new Vector2D(3,3);
+//            for (double j = 0; j < 1; j+=.01) {
+//                System.out.println(bezierCubic.compute(j,new Vector2D[]{p0.clone(),p1.clone(),p2.clone(),p3.clone()}));
+//            }
 
 
 

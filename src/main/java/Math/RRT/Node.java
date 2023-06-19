@@ -9,14 +9,12 @@ import java.util.List;
 public class Node {
     double x;
     double y;
-    List<Node> neighbors;
     double cost;
     Node parent;
 
     public Node(double x, double y) {
         this.x = x;
         this.y = y;
-        this.neighbors = new ArrayList<>();
         this.cost = Double.POSITIVE_INFINITY;
         this.parent = null;
     }

@@ -12,8 +12,10 @@ public class Obstacle {
 
     List<Vector2D> corners;
     double THRESHOLD = .01;
+    private Node cachedNode;
     public Obstacle(List<Vector2D> corners){
         this.corners = corners;
+        cachedNode = new Node(0,0);
     }
 
     public boolean hasCollided(Node n1, Node n2){
@@ -63,7 +65,10 @@ public class Obstacle {
             x = answers[0];
             y = answers[1];
             Vector2D interscept = new Vector2D(x,y);
-            Node intersceptNode = new Node(x,y);
+            cachedNode.x = x;
+            cachedNode.y = y;
+            Node intersceptNode = cachedNode;
+
 //
 //            System.out.println("a1 : " + a1);
 //            System.out.println("a2 : " + a2);
@@ -112,6 +117,7 @@ public class Obstacle {
     }
 
     public static void main(String[] args) {
+        FixedNodePool fixedNodePool = new FixedNodePool(100);
         Vector2D c1,c2,c3,c4;
         c1 = new Vector2D(-1,1);
         c2 = new Vector2D(1,1);
