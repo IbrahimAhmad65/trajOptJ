@@ -1,18 +1,7 @@
 package Math.RRT;
 
-import Math.Common.Function;
-import Math.Common.Function2Args;
-import Math.Common.Matrix;
 import Math.Common.Vector2D;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.spline.CubicHermiteSpline;
-import edu.wpi.first.math.spline.QuinticHermiteSpline;
-import edu.wpi.first.math.spline.Spline;
-import edu.wpi.first.math.spline.SplineHelper;
 
-import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -23,58 +12,46 @@ import static java.lang.Math.*;
 public class InformedRRTStar {
     private Tree tree;
     public static int Iterations = 5000;
-    public static double Step_Size = .5;
+    public static double Step_Size = 10;
     public static double thresholdForCompletion = 1;
-    public static double neighborhood = 1000;
     private Node goal;
     private double maxX;
     private double maxY;
     private Node goalButInList;
-    public boolean test = false;
-    private double cMin;
-    protected int itr;
-    private double width;
-    private double length;
-    public static double minWidthCutoffPoint = .001;
-    FileWriter writer;
-    private double angleToSolution;
-    private boolean hasSolution = false;
-    public List<Obstacle> obstacles = new ArrayList<Obstacle>();
-    // fixed node pool 2:16
-    // non fixed node pool 2:15
-    private FixedNodePool fixedNodePool;
 
-    public List<Node> rrtStar(Node start, Node goal, FixedNodePool fixedNodePool) {
-        this.fixedNodePool = fixedNodePool;
-        cMin = findDistance(start, goal);
-        angleToSolution = Math.atan2(start.y - goal.y, start.x - goal.x);
-        if (test) {
-            try {
-                writer = new FileWriter("/home/ibrahim/rrt.txt");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+    private boolean hasSolution = false;
+    public List<Vector2D> allCorners;
+    public List<Obstacle> obstacles = new ArrayList<Obstacle>();
+
+
+
+    public List<Node> rrtStar(Node start, Node goal) {
 
         this.goal = goal;
         this.tree.root = start;
         this.tree.root.cost = 0.0;
         this.tree.nodes.add(start);
-//        System.out.println("using fixed node pool to summon goal in list");
         goalButInList = new Node(goal.x, goal.y);
 
         for (int i = 0; i < Iterations; i++) {
-//            System.out.println("iteration: " + i);
-//            System.out.println("eee");
-//            System.out.println(fixedNodePool.head);
+            int maxOffset = 0;
+            for (int j = 0; j < allCorners.size() - maxOffset; j++) {
+                Vector2D v = allCorners.get(j);
+                Node n = new Node(v.x, v.y);
+                Node nearest = findNearestNode(n);
+                if (addNodeWithCollisionCheck(nearest, n)) {
+                    allCorners.remove(v);
+                }
+                j--;
+                maxOffset++;
+            }
             Node random = findRandomNode();
             Node nearest = findNearestNode(random);
-//            System.out.println("using fixed node pool to summon delta node");
             Node delta = new Node(random.x - nearest.x, random.y - nearest.y);
 
             delta.setMagnitude(Math.min(Step_Size, delta.getMagnitude()));
-//            System.out.println("using fixed node pool to summon interpolated node in list");
             Node interpolated = new Node(nearest.x + delta.x, nearest.y + delta.y);
+
 
             if (findDistance(interpolated, goal) < thresholdForCompletion) {
                 if (nearest.equals(goalButInList)) {
@@ -84,21 +61,7 @@ public class InformedRRTStar {
                 if (unableToAddGoal) {
                     continue;
                 }
-
-                if (!hasSolution) {
-                    hasSolution = true;
-//                    printPath(findPathToGoalFromTree());
-
-                }
-                double arg = goalButInList.cost * goalButInList.cost - cMin * cMin;
-                if (arg >= 0.0) {
-                    width = sqrt(arg);
-                } else {
-                    width = 0.0;
-                    break;
-                }
-
-                length = goalButInList.cost;
+                break;
             } else {
                 addNodeWithCollisionCheck(nearest, interpolated);
             }
@@ -147,42 +110,26 @@ public class InformedRRTStar {
 
     private Node findRandomNode() {
         Random random = new Random();
-        double x;
-        double y;
-        if (hasSolution) {
-            double r = sqrt(random.nextDouble());
-            double rho = random.nextDouble() * 2 * Math.PI;
-
-            x = (r * cos(rho) + 1) * length / 2.0 - (length - cMin) / 2.0;
-            y = r * sin(rho) * width / 2.0;
-            double theta = Math.atan2(y, x);
-            theta -= angleToSolution;
-            double mag = sqrt(x * x + y * y);
-            x = mag * cos(theta) + tree.root.x;
-            y = mag * sin(theta) + tree.root.y;
-//            System.out.println("x: " + x + " y: " + y + " theta: " + theta + " mag: " + mag + " angleToSolution: " + angleToSolution + " length: " + length + " width: " + width + " cMin: " + cMin + "goal but in list: " + goalButInList.cost);
-        } else {
-            x = random.nextDouble() * maxX;
-            y = random.nextDouble() * maxY;
-        }
-//        System.out.println("using fixed node pool to summon random node");
+        double x, y;
+        x = random.nextDouble() * maxX;
+        y = random.nextDouble() * maxY;
         return new Node(x, y);
     }
 
-    private void rewire(Node n) {
-        List<Node> nodesInNeighborhood = findAllNodesInNeighborhood(n);
+    static double pythag(double x, double y) {
+        return sqrt(x * x + y * y);
+    }
 
-        for (Node e : nodesInNeighborhood) {
+    private void rewire(Node n) {
+        for (int i = 0; i < tree.nodes.size(); i++) {
+            Node e = tree.nodes.get(i);
             if (e.cost + findDistance(n, e) < n.cost && !hasCollision(n, e)) {
+                tree.prune(n);
                 addNodeToTree(n, e);
             }
         }
 
 
-    }
-
-    private boolean inNeighborhood(Node n1, Node n2) {
-        return findDistance(n1, n2) < neighborhood;
     }
 
     private Node findNearestNode(Node n) {
@@ -211,9 +158,6 @@ public class InformedRRTStar {
     }
 
 
-    double getGoalCost() {
-        return goalButInList.cost;
-    }
 
     private List<Node> findPathToGoalFromTree() {
         List<Node> output = new ArrayList<Node>();
@@ -225,29 +169,7 @@ public class InformedRRTStar {
         return output;
     }
 
-    private List<Node> findAllNodesInNeighborhood(Node n) {
-        List<Node> output = new ArrayList<Node>();
-        for (Node node : tree.nodes) {
-            if (inNeighborhood(n, node)) {
-                output.add(node);
-            }
-        }
-        return output;
-    }
 
-
-    private void writeFullTree() {
-        if (test) {
-            for (Node n : tree.nodes) {
-                try {
-                    writer.write(n.x + "," + n.y + "," + n.cost + ",\n");
-                    writer.flush();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
 
     public static void printPath(List<Node> fullPath) {
         for (int j = 0; j < fullPath.size() - 1; j++) {
@@ -284,188 +206,56 @@ public class InformedRRTStar {
 
         ArrayList<Vector2D> obstacleArrayList3 = new ArrayList<Vector2D>();
         c1 = new Vector2D(-12, 1.4).add(shift.clone());
-        c2 = new Vector2D(-4.93, 1.413).add(shift.clone());
+        c2 = new Vector2D(-4.93, 1.4).add(shift.clone());
+        c3 = new Vector2D(-12, 1.42).add(shift.clone());
+        c4 = new Vector2D(-4.93, 1.42).add(shift.clone());
         obstacleArrayList3.add(c1);
         obstacleArrayList3.add(c2);
+        obstacleArrayList3.add(c4);
+        obstacleArrayList3.add(c3);
 
         ArrayList<Vector2D> obstacleArrayList4 = new ArrayList<Vector2D>();
         c1 = new Vector2D(12, 1.4).add(shift.clone());
-        c2 = new Vector2D(4.93, 1.413).add(shift.clone());
+        c2 = new Vector2D(4.93, 1.4).add(shift.clone());
+        c3 = new Vector2D(4.93, 1.42).add(shift.clone());
+        c4 = new Vector2D(12, 1.42).add(shift.clone());
         obstacleArrayList4.add(c1);
         obstacleArrayList4.add(c2);
+        obstacleArrayList4.add(c3);
+        obstacleArrayList4.add(c4);
         List<Node> fullPath = new ArrayList<Node>();
 
-        Spline[] arr = null;
-        FixedNodePool fixedNodePool = new FixedNodePool(15010);
-        for (int i = 0; i < 10000; i++) {
+        ArrayList<Vector2D> allCorners = new ArrayList<>();
 
+
+        Obstacle[] obstacles = new Obstacle[4];
+        obstacles[0] = new Obstacle(obstacleArrayList);
+        obstacles[1] = new Obstacle(obstacleArrayList2);
+        obstacles[2] = new Obstacle(obstacleArrayList3);
+        obstacles[3] = new Obstacle(obstacleArrayList4);
+        for (Obstacle r : obstacles) {
+            for (int i = 0; i < 4; i++) {
+                Vector2D delta = r.corners.get(i).subtract(r.center);
+                delta.setMagnitude(.02);
+                delta.add(r.corners.get(i));
+                allCorners.add(delta);
+            }
+        }
+
+        for (int i = 0; i < 10000; i++) {
+            List<Vector2D> allCorners2 = new ArrayList<>(allCorners);
             InformedRRTStar rrt = new InformedRRTStar();
             rrt.tree = new Tree();
             rrt.maxX = 16.5;
             rrt.maxY = 8;
-            rrt.obstacles.add(new Obstacle(obstacleArrayList));
-            rrt.obstacles.add(new Obstacle(obstacleArrayList2));
-            rrt.obstacles.add(new Obstacle(obstacleArrayList3));
-            rrt.obstacles.add(new Obstacle(obstacleArrayList4));
-
-
-            fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(15.59, 5.84), fixedNodePool);
-//            System.out.println(fixedNodePool.head);
-//            System.out.println("here");
-            fixedNodePool.reset();
-//
-//            //Bezier
-//            // Cubic
-//            // B(t) = (1-t)^3 P0 + 3 * (1-t)^2 * tP1 + 3*(1-t)t^2P2 + t^3p3
-//
-//            Function2Args<Double, Vector2D[], Vector2D> bezierCubic = (t,p) ->{
-//                Vector2D p0 = p[0];
-//                Vector2D p1 = p[1];
-//                Vector2D p2 = p[2];
-//                Vector2D p3 = p[3];
-//                // using pow for cleanliness, will change later
-//                double minusTSquared = Math.pow((1-t),2);
-//                double minusTcubed = Math.pow((1-t),3);
-//                return p0.scale(minusTcubed).add(p1.scale(3*minusTSquared * t)).add(p2.scale( 3* (1-t) * t*t)).add(p3.scale(t*t*t));
-//            };
-//
-//            Vector2D p0 = new Vector2D();
-//            Vector2D p1 = new Vector2D(1,4);
-//            Vector2D p2 = new Vector2D(2,-4);
-//            Vector2D p3 = new Vector2D(3,3);
-//            for (double j = 0; j < 1; j+=.01) {
-//                System.out.println(bezierCubic.compute(j,new Vector2D[]{p0.clone(),p1.clone(),p2.clone(),p3.clone()}));
-//            }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            // Why is FRC Math so hard
-
-
-            //            double[][] data1 = new double[][]{
-//                    {0,0,1},
-//                    {1,1,1},
-//                    {4,2,1}
-//            };
-//            double[][] data2 = new double[][]{
-//                    {0,0,1},
-//                    {1,1,1},
-//                    {4,2,1}
-//            };
-//            Matrix x = new Matrix(data1);
-//            Matrix y = new Matrix(data2);
-//            double[] solve1 = new double[]{fullPath.get(0).x, fullPath.get(1).x, fullPath.get(2).x};
-//            double[] solve2 = new double[]{fullPath.get(0).y, fullPath.get(1).y, fullPath.get(2).y};
-//            double[] out1 = Matrix.solve(x, solve1);
-//            double[] out2 = Matrix.solve(y, solve2);
-//
-//            for (int j = 0; j < 2000; j++) {
-//                double t = j / 1000.;
-//                double x1 = out1[0] * t * t + out1[1] * t + out1[2];
-//                double y1 = out2[0] * t * t + out2[1] * t + out2[2];
-////                System.out.println(new Vector2D(x1, y1));
-//            }
-
-//            Translation2d[] interiorWaypoints = new Translation2d[fullPath.size() - 2];
-//            for (int j = 0; j < interiorWaypoints.length; j++) {
-//                interiorWaypoints[j] = fullPath.get(j + 1).toTranslation2d();
-//            }
-//            double velScale = 1;
-//            double theta1 = atan2(fullPath.get(1).y - fullPath.get(0).y, fullPath.get(1).x - fullPath.get(0).x);
-//
-//            double[] array1 = new double[]{fullPath.get(0).x, velScale * (cos(theta1))};
-//            double[] array2 = new double[]{fullPath.get(0).y, velScale * (sin(theta1))};
-//
-//            Spline.ControlVector start = new Spline.ControlVector(array1, array2);
-//
-//            double theta2 = atan2(fullPath.get(fullPath.size() - 1).y - fullPath.get(fullPath.size() - 2).y, fullPath.get(fullPath.size() - 1).x - fullPath.get(fullPath.size() - 2).x);
-//            velScale = 2;
-//
-//            array1 = new double[]{fullPath.get(fullPath.size() - 1).x,  velScale * (cos(theta2))};
-//            array2 = new double[]{fullPath.get(fullPath.size() - 1).y, velScale *  velScale * (sin(theta2))};
-//
-//            Spline.ControlVector end = new Spline.ControlVector(array1, array2);
-//            arr = SplineHelper.getCubicSplinesFromControlVectors(start, interiorWaypoints, end);
-
-
-
-
-
-//            List<Pose2d> array = new ArrayList<>();
-//            for (int j = 0; j < fullPath.size(); j++) {
-//                double theta = -5;
-//                System.out.println(j);
-//                if(j == 0){
-//                    theta = atan2(fullPath.get(j + 1).y - fullPath.get(j).y, fullPath.get(j + 1).x - fullPath.get(j).x);
-//                }
-//                if (j == fullPath.size() - 1 ){
-//                    theta = atan2(fullPath.get(j).y - fullPath.get(j-1).y, fullPath.get(j).x - fullPath.get(j-1).x);
-//
-//                }
-//                if(theta == -5d){
-//                    double theta1 = atan2(fullPath.get(j + 1).y - fullPath.get(j).y, fullPath.get(j + 1).x - fullPath.get(j).x);
-//                    double theta2 = atan2(fullPath.get(j).y - fullPath.get(j-1).y, fullPath.get(j).x - fullPath.get(j-1).x);
-//                    theta = .5 * (theta1 + theta2);
-//                }
-////                if(j < fullPath.size() -1 ){
-////                    theta1 = atan2(fullPath.get(j + 1).y - fullPath.get(j).y, fullPath.get(j + 1).x - fullPath.get(j).x);
-////                } else {
-////                    theta1 = atan2(fullPath.get(j).y - fullPath.get(j-1).y, fullPath.get(j).x - fullPath.get(j-1).x);
-////
-////                }
-//
-//                array.add(new Pose2d(fullPath.get(j).toTranslation2d(), Rotation2d.fromRadians(theta)));
-//            }
-//            Spline.ControlVector[] controlVectors = new Spline.ControlVector[array.size()];
-//            for (int j = 0; j < controlVectors.length; j++) {
-//                controlVectors[j] = new Spline.ControlVector(new double[]{array.get(j).getTranslation().getX(), 0,0}, new double[]{array.get(j).getTranslation().getY(), 0,0});
-//            }
-//
-//            arr = SplineHelper.getQuinticSplinesFromWaypoints(array);
-
+            rrt.allCorners = allCorners2;
+            rrt.obstacles.add(obstacles[0]);
+            rrt.obstacles.add(obstacles[1]);
+            rrt.obstacles.add(obstacles[2]);
+            rrt.obstacles.add(obstacles[3]);
+            fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(14, 1.84));
+            System.out.println(rrt.tree.nodes.size());
         }
-//        for (Spline spline : arr) {
-//            for (int i = 0; i < 1000; i++) {
-//                System.out.println(new Vector2D(spline.getPoint(i / 1000.0).poseMeters));
-//            }
-//        }
-
-
-//
         printPath(fullPath);
     }
 }
