@@ -16,6 +16,10 @@ public class Obstacle {
     double THRESHOLD = .01;
     private final Node cachedNode;
     public Vector2D center;
+    Vector2D cache1 = new Vector2D();
+    Vector2D cache2 = new Vector2D();
+    Vector2D cache3 = new Vector2D();
+
 
     public Obstacle(List<Vector2D> corners) {
         this.corners = corners;
@@ -32,12 +36,12 @@ public class Obstacle {
         double b1;
         double c1;
         {
-            Vector2D direction = new Vector2D(n2.x - n1.x, n2.y - n1.y);
-            Vector2D base = n1.toVector2D();
-            Vector2D orth = new Vector2D(-direction.y, direction.x);
-            a1 = orth.x;
-            c1 = orth.x * base.x + orth.y * base.y;
-            b1 = orth.y;
+            cache1.setXY(n2.x - n1.x, n2.y - n1.y);
+            cache2.setXY( n1.x, n1.y);
+            cache3.setXY(-cache1.y, cache1.x);
+            a1 = cache3.x;
+            c1 = cache3.x * cache2.x + cache3.y * cache2.y;
+            b1 = cache3.y;
         }
 
 
@@ -46,14 +50,14 @@ public class Obstacle {
             Vector2D corner2 = corners.get((i + 1) % corners.size());
 
 
-            Vector2D direction = corner1.clone().subtract(corner2);
-            Vector2D base = corner1.clone();
-            Vector2D orth = new Vector2D(-direction.y, direction.x);
+            cache1 = corner1.subtract(corner2);
+            cache2 = corner1.clone();
+            cache3.setXY(-cache1.y, cache1.x);
 
 
-            double a2 = orth.x;
-            double b2 = orth.y;
-            double c2 = orth.x * base.x + orth.y * base.y;
+            double a2 = cache3.x;
+            double b2 = cache3.y;
+            double c2 = cache3.x * cache2.x + cache3.y * cache2.y;
 
             double x;
             double y;
@@ -63,7 +67,7 @@ public class Obstacle {
 
             x = answers[0];
             y = answers[1];
-            Vector2D interscept = new Vector2D(x, y);
+            cache1.setXY(x, y);
             cachedNode.x = x;
             cachedNode.y = y;
             Node intersceptNode = cachedNode;
@@ -72,7 +76,7 @@ public class Obstacle {
             if (Double.isNaN(x) || Double.isNaN(y)) {
                 continue;
             }
-            boolean checkCorners = Math.abs(interscept.getDistance(corner1) + interscept.getDistance(corner2) - corner1.getDistance(corner2)) < THRESHOLD;
+            boolean checkCorners = Math.abs(cache1.getDistance(corner1) + cache1.getDistance(corner2) - corner1.getDistance(corner2)) < THRESHOLD;
             boolean checkNodes = Math.abs(findDistance(intersceptNode, n1) + findDistance(intersceptNode, n2) - findDistance(n1, n2)) < THRESHOLD;
             if ((checkCorners && checkNodes)) {
 

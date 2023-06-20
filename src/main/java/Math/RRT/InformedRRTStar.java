@@ -12,7 +12,7 @@ import static java.lang.Math.*;
 public class InformedRRTStar {
     private Tree tree;
     public static int Iterations = 5000;
-    public static double Step_Size = 10;
+    public static double Step_Size = 1000;
     public static double thresholdForCompletion = 1;
     private Node goal;
     private double maxX;
@@ -242,7 +242,7 @@ public class InformedRRTStar {
             }
         }
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 100000; i++) {
             List<Vector2D> allCorners2 = new ArrayList<>(allCorners);
             InformedRRTStar rrt = new InformedRRTStar();
             rrt.tree = new Tree();
@@ -254,7 +254,7 @@ public class InformedRRTStar {
             rrt.obstacles.add(obstacles[2]);
             rrt.obstacles.add(obstacles[3]);
             fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(14, 1.84));
-            System.out.println(rrt.tree.nodes.size());
+//            System.out.println(rrt.tree.nodes.size());
         }
         printPath(fullPath);
     }
