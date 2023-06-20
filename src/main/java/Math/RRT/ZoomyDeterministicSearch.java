@@ -29,9 +29,8 @@ public class ZoomyDeterministicSearch {
         allCorners.add(new Vector2D(goal.x, goal.y));
 
 //        for (int i = 0; i < Iterations; i++) {
-        int maxOffset = 0;
-        for (int j = 0; j < allCorners.size() - maxOffset; j++) {
-            Vector2D v = allCorners.get(j);
+        for (int j = 0; j < allCorners.size(); j++) {
+            Vector2D v = allCorners.get(0);
             Node n = new Node(v.x, v.y);
             Node nearest = findNearestNode(n);
             if (findDistance(n, goal) < thresholdForCompletion) {
@@ -46,12 +45,8 @@ public class ZoomyDeterministicSearch {
             }
             if (addNodeWithCollisionCheck(nearest, n)) {
                 allCorners.remove(v);
-//                    if(findDistance(n, goal) < thresholdForCompletion){
-//                        break;
-//                    }
+
             }
-            j--;
-            maxOffset++;
         }
         Node nearest = findNearestNode(goalButInList);
         addNodeWithCollisionCheck(nearest, goalButInList);

@@ -17,6 +17,7 @@ public class JankRRTStar {
     private double maxX;
     private double maxY;
     private Node goalButInList;
+    private double minDistance = 0;
 
     public List<Vector2D> allCorners;
     public List<Obstacle> obstacles = new ArrayList<Obstacle>();
@@ -31,16 +32,14 @@ public class JankRRTStar {
         goalButInList = new Node(goal.x, goal.y);
 
         for (int i = 0; i < Iterations; i++) {
-            int maxOffset = 0;
-            for (int j = 0; j < allCorners.size() - maxOffset; j++) {
-                Vector2D v = allCorners.get(j);
+            for (int j = 0; j < allCorners.size() ; j++) {
+                Vector2D v = allCorners.get(0);
                 Node n = new Node(v.x, v.y);
                 Node nearest = findNearestNode(n);
                 if (addNodeWithCollisionCheck(nearest, n)) {
                     allCorners.remove(v);
                 }
-                j--;
-                maxOffset++;
+
             }
             Node random = findRandomNode();
             Node nearest = findNearestNode(random);
@@ -84,7 +83,7 @@ public class JankRRTStar {
         if (hasCollision(nearest, interpolated)) {
             return false;
         }
-        addNodeToTree(interpolated, nearest);
+        addNodeToTree(interpolated, nearest, minDistance);
         rewire(interpolated);
         return true;
     }
@@ -115,7 +114,7 @@ public class JankRRTStar {
             Node e = tree.nodes.get(i);
             if (e.cost + findDistance(n, e) < n.cost && !hasCollision(n, e)) {
                 tree.prune(n);
-                addNodeToTree(n, e);
+                addNodeToTree(n, e, minDistance);
             }
         }
 
@@ -127,11 +126,13 @@ public class JankRRTStar {
         Node nearest = null;
 
         for (Node node : tree.nodes) {
-            if (findDistance(node, n) < minDist) {
+            minDistance = findDistance(node, n);
+            if (minDistance < minDist) {
                 nearest = node;
                 minDist = findDistance(node, n);
             }
         }
+        minDistance = minDist;
         return nearest;
     }
 
@@ -149,6 +150,12 @@ public class JankRRTStar {
 
     }
 
+    private void addNodeToTree(Node n, Node nearestNode, double distance) {
+        n.parent = nearestNode;
+        n.cost = nearestNode.cost + distance;
+        tree.nodes.add(n);
+
+    }
 
     private List<Node> findPathToGoalFromTree() {
         List<Node> output = new ArrayList<Node>();
