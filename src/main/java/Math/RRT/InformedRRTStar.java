@@ -24,7 +24,6 @@ public class InformedRRTStar {
     public List<Obstacle> obstacles = new ArrayList<Obstacle>();
 
 
-
     public List<Node> rrtStar(Node start, Node goal) {
 
         this.goal = goal;
@@ -158,7 +157,6 @@ public class InformedRRTStar {
     }
 
 
-
     private List<Node> findPathToGoalFromTree() {
         List<Node> output = new ArrayList<Node>();
         Node current = goalButInList;
@@ -168,7 +166,6 @@ public class InformedRRTStar {
         }
         return output;
     }
-
 
 
     public static void printPath(List<Node> fullPath) {
@@ -243,6 +240,8 @@ public class InformedRRTStar {
         }
 
         for (int i = 0; i < 100000; i++) {
+//        for (int i = 0; i < 1; i++) {
+
             List<Vector2D> allCorners2 = new ArrayList<>(allCorners);
             InformedRRTStar rrt = new InformedRRTStar();
             rrt.tree = new Tree();
@@ -253,7 +252,7 @@ public class InformedRRTStar {
             rrt.obstacles.add(obstacles[1]);
             rrt.obstacles.add(obstacles[2]);
             rrt.obstacles.add(obstacles[3]);
-            fullPath = rrt.rrtStar(new Node(2.2, 2.8), new Node(14, 1.84));
+            fullPath = rrt.rrtStar(new Node(Math.random() + 1, Math.random() + 1), new Node(14 + Math.random(), 1.84 + Math.random() / 2.0));
 //            System.out.println(rrt.tree.nodes.size());
         }
         printPath(fullPath);

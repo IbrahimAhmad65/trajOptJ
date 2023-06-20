@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static Math.RRT.InformedRRTStar.findDistance;
+import static Math.RRT.InformedRRTStar.pythag;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
@@ -19,6 +20,7 @@ public class Obstacle {
     Vector2D cache1 = new Vector2D();
     Vector2D cache2 = new Vector2D();
     Vector2D cache3 = new Vector2D();
+    public double R;
 
 
     public Obstacle(List<Vector2D> corners) {
@@ -29,9 +31,41 @@ public class Obstacle {
             center.add(v);
         }
         center.scale(.25);
+        for (Vector2D v: corners) {
+            R = max(R,v.getDistance(center));
+//            System.out.println("R: " + R);
+        }
+//        System.out.println("Final R: " + R);
+    }
+
+    private boolean circleCheck(Node n1, Node n2){
+        double x1, x2, y1, y2;
+        x1 = n1.x - center.x;
+        x2 = n2.x - center.x;
+        y1 = n1.y - center.y;
+        y2 = n2.y - center.y;
+        double D = (x1*y2-y1*x2);
+        double dx = x2 - x1;
+        double dy = y2 -y1;
+        double dr = dx*dx + dy * dy;
+        if( R*R* dr -(D*D) <= 0){
+//            System.out.println("Center: " + center + " R: " + R + " n1 " + n1 + " n2 " + n2 + " value: " + (R*R* pythag(x2-x1,y2-y1) -(D*D)));
+            return false;
+        }
+        return true;
     }
 
     public boolean hasCollided(Node n1, Node n2) {
+
+
+        //d_x = x2-x1
+        //d_y = y2-y1
+        //dr=pythag(d_x,d_y)
+        //D = x1y2-x2y1
+        if(!circleCheck(n1,n2)){
+            return false;
+        }
+//        System.out.println("eyo");
         double a1;
         double b1;
         double c1;
@@ -86,6 +120,7 @@ public class Obstacle {
         }
         return false;
     }
+
 
 
     public static void main(String[] args) {
