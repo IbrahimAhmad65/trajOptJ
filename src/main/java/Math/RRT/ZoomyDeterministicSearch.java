@@ -4,69 +4,86 @@ import Math.Common.Vector2D;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
-import static java.lang.Math.*;
+import static java.lang.Math.sqrt;
+
+public class ZoomyDeterministicSearch {
 
 
-public class JankRRTStar {
     private Tree tree;
-    public static int Iterations = 5000;
     public static double thresholdForCompletion = 1;
     private Node goal;
-    private double maxX;
-    private double maxY;
     private Node goalButInList;
 
     public List<Vector2D> allCorners;
     public List<Obstacle> obstacles = new ArrayList<Obstacle>();
 
 
-    public List<Node> rrtStar(Node start, Node goal) {
+    public List<Node> graphSearchyThing(Node start, Node goal) {
 
         this.goal = goal;
         this.tree.root = start;
         this.tree.root.cost = 0.0;
         this.tree.nodes.add(start);
         goalButInList = new Node(goal.x, goal.y);
+        allCorners.add(new Vector2D(goal.x, goal.y));
 
-        for (int i = 0; i < Iterations; i++) {
-            int maxOffset = 0;
-            for (int j = 0; j < allCorners.size() - maxOffset; j++) {
-                Vector2D v = allCorners.get(j);
-                Node n = new Node(v.x, v.y);
-                Node nearest = findNearestNode(n);
-                if (addNodeWithCollisionCheck(nearest, n)) {
+//        for (int i = 0; i < Iterations; i++) {
+        int maxOffset = 0;
+        for (int j = 0; j < allCorners.size() - maxOffset; j++) {
+            Vector2D v = allCorners.get(j);
+            Node n = new Node(v.x, v.y);
+            Node nearest = findNearestNode(n);
+            if (findDistance(n, goal) < thresholdForCompletion) {
+                if (addNodeWithCollisionCheck(nearest, goalButInList)) {
                     allCorners.remove(v);
+                    for (int i = 0; i < tree.nodes.size(); i++) {
+                        rewire(tree.nodes.get(i));
+                    }
+                    return (findPathToGoalFromTree());
                 }
-                j--;
-                maxOffset++;
+//                    break;
             }
-            Node random = findRandomNode();
-            Node nearest = findNearestNode(random);
+            if (addNodeWithCollisionCheck(nearest, n)) {
+                allCorners.remove(v);
+//                    if(findDistance(n, goal) < thresholdForCompletion){
+//                        break;
+//                    }
+            }
+            j--;
+            maxOffset++;
+        }
+        Node nearest = findNearestNode(goalButInList);
+        addNodeWithCollisionCheck(nearest, goalButInList);
+        for (int i = 0; i < tree.nodes.size(); i++) {
+            rewire(tree.nodes.get(i));
+        }
 
-            // must test adaptive step size, below is an optimization for no step size
+//            Node nearest = findNearestNode(random);
+
+        // must test adaptive step size, below is an optimization for no step size
 //            Node delta = new Node(random.x - nearest.x, random.y - nearest.y);
 //            delta.setMagnitude(Math.min(Step_Size, delta.getMagnitude()));
 //            Node interpolated = new Node(nearest.x + delta.x, nearest.y + delta.y);
 
 
-            // otherwise do this:
-            if (findDistance(random, goal) < thresholdForCompletion) {
-                if (!addNodeWithCollisionCheck(nearest, goalButInList)) {
-                    continue;
-                }
-                return findPathToGoalFromTree();
-            } else {
-                // here
-                addNodeWithCollisionCheck(nearest, random);
-            }
+        // otherwise do this:
+//            if (findDistance(random, goal) < thresholdForCompletion) {
+//                if (!addNodeWithCollisionCheck(nearest, goalButInList)) {
+//                    continue;
+//                }
+//        System.out.println(hasGoalBeenReached());
+        return findPathToGoalFromTree();
+//            } else {
+//                // here
+//                addNodeWithCollisionCheck(nearest, random);
+//            }
 
-        }
+//        }
 //        if (hasGoalBeenReached()) {
         // I have broken "safe exiting" maybe
 //        }
-        return null;
+//        return null;
     }
 
 
@@ -100,16 +117,6 @@ public class JankRRTStar {
     }
 
 
-    private Node findRandomNode() {
-        Random random = new Random();
-        double x, y;
-        x = random.nextDouble() * maxX;
-        y = random.nextDouble() * maxY;
-        return new Node(x, y);
-    }
-
-
-
     private void rewire(Node n) {
         for (int i = 0; i < tree.nodes.size(); i++) {
             Node e = tree.nodes.get(i);
@@ -138,7 +145,7 @@ public class JankRRTStar {
     public static double findDistance(Node n1, Node n2) {
         double x = n1.x - n2.x;
         double y = n1.y - n2.y;
-        return sqrt(x*x + y*y);
+        return sqrt(x * x + y * y);
     }
 
 
@@ -236,21 +243,18 @@ public class JankRRTStar {
 //        for (int i = 0; i < 1; i++) {
 
             List<Vector2D> allCorners2 = new ArrayList<>(allCorners);
-            JankRRTStar rrt = new JankRRTStar();
+            ZoomyDeterministicSearch rrt = new ZoomyDeterministicSearch();
             rrt.tree = new Tree();
-            rrt.maxX = 16.5;
-            rrt.maxY = 8;
             rrt.allCorners = allCorners2;
             rrt.obstacles.add(obstacles[0]);
             rrt.obstacles.add(obstacles[1]);
             rrt.obstacles.add(obstacles[2]);
             rrt.obstacles.add(obstacles[3]);
-            fullPath = rrt.rrtStar(new Node(Math.random() + 1, 2 * Math.random() + 1), new Node(14 + Math.random(), 1.84 + 2 * Math.random()));
+            fullPath = rrt.graphSearchyThing(new Node(Math.random() + 1, 2 * Math.random() + 1), new Node(14 + Math.random(), 1.84 + 2 * Math.random()));
 //            System.out.println(rrt.tree.nodes.size());
         }
         printPath(fullPath);
     }
+
+
 }
-
-
-
