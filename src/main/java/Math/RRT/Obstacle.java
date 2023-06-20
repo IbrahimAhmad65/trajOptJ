@@ -131,7 +131,7 @@ public class Obstacle {
             Node intersceptNode = cachedNode;
 
 
-            if (Double.isNaN(x) || Double.isNaN(y)) {
+            if (!Double.isFinite(x) || !Double.isFinite(y)) {
                 continue;
             }
 //            boolean checkCorners = Math.abs(cache1.getDistance(corner1) + cache1.getDistance(corner2) - corner1.getDistance(corner2)) < THRESHOLD;
