@@ -9,7 +9,7 @@ import java.util.Random;
 import static java.lang.Math.*;
 
 
-public class InformedRRTStar {
+public class JankRRTStar {
     private Tree tree;
     public static int Iterations = 5000;
     public static double Step_Size = 1000;
@@ -46,13 +46,15 @@ public class InformedRRTStar {
             }
             Node random = findRandomNode();
             Node nearest = findNearestNode(random);
-            Node delta = new Node(random.x - nearest.x, random.y - nearest.y);
 
-            delta.setMagnitude(Math.min(Step_Size, delta.getMagnitude()));
-            Node interpolated = new Node(nearest.x + delta.x, nearest.y + delta.y);
+            // must test adaptive step size, below is an optimization for no step size
+//            Node delta = new Node(random.x - nearest.x, random.y - nearest.y);
+//            delta.setMagnitude(Math.min(Step_Size, delta.getMagnitude()));
+//            Node interpolated = new Node(nearest.x + delta.x, nearest.y + delta.y);
 
 
-            if (findDistance(interpolated, goal) < thresholdForCompletion) {
+            // otherwise do this:
+            if (findDistance(random, goal) < thresholdForCompletion) {
                 if (nearest.equals(goalButInList)) {
                     continue;
                 }
@@ -60,15 +62,16 @@ public class InformedRRTStar {
                 if (unableToAddGoal) {
                     continue;
                 }
-                break;
+                return findPathToGoalFromTree();
             } else {
-                addNodeWithCollisionCheck(nearest, interpolated);
+                // here
+                addNodeWithCollisionCheck(nearest, random);
             }
 
         }
-        if (hasGoalBeenReached()) {
-            return findPathToGoalFromTree();
-        }
+//        if (hasGoalBeenReached()) {
+        // I have broken "safe exiting" maybe
+//        }
         return null;
     }
 
@@ -115,9 +118,7 @@ public class InformedRRTStar {
         return new Node(x, y);
     }
 
-    static double pythag(double x, double y) {
-        return sqrt(x * x + y * y);
-    }
+
 
     private void rewire(Node n) {
         for (int i = 0; i < tree.nodes.size(); i++) {
@@ -243,7 +244,7 @@ public class InformedRRTStar {
 //        for (int i = 0; i < 1; i++) {
 
             List<Vector2D> allCorners2 = new ArrayList<>(allCorners);
-            InformedRRTStar rrt = new InformedRRTStar();
+            JankRRTStar rrt = new JankRRTStar();
             rrt.tree = new Tree();
             rrt.maxX = 16.5;
             rrt.maxY = 8;

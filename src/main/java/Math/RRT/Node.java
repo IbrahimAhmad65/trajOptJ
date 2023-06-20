@@ -1,15 +1,6 @@
 package Math.RRT;
 
-import Math.Common.Function;
-import Math.Common.Function2Args;
 import Math.Common.Vector2D;
-import edu.wpi.first.math.geometry.Translation2d;
-
-import java.util.ArrayList;
-import java.util.List;
-
-import static Math.RRT.InformedRRTStar.pythag;
-import static java.lang.Math.*;
 
 public class Node {
     double x;
