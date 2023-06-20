@@ -240,7 +240,7 @@ public class JankRRTStar {
             }
         }
 
-        for (int i = 0; i < 100000; i++) {
+        for (int i = 0; i < 1000000; i++) {
 //        for (int i = 0; i < 1; i++) {
 
             List<Vector2D> allCorners2 = new ArrayList<>(allCorners);

@@ -30,13 +30,13 @@ public class Node {
         return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Node node = (Node) o;
-        return Double.compare(node.x, x) == 0 && Double.compare(node.y, y) == 0;
-    }
+//    @Override
+//    public boolean equals(Object o) {
+//        return this == o;
+////        if (o == null || getClass() != o.getClass()) return false;
+////        Node node = (Node) o;
+////        return x == node.x && y == node.y;
+//    }
 
     public Vector2D toVector2D(){
         return new Vector2D(x, y);
