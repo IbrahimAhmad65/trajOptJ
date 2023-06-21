@@ -36,9 +36,9 @@ public class ZoomyDeterministicSearch {
             if (findDistance(n, goal) < thresholdForCompletion) {
                 if (addNodeWithCollisionCheck(nearest, goalButInList)) {
                     allCorners.remove(v);
-                    for (int i = 0; i < tree.nodes.size(); i++) {
-                        rewire(tree.nodes.get(i));
-                    }
+//                    for (int i = 0; i < tree.nodes.size(); i++) {
+//                        rewire(tree.nodes.get(i));
+//                    }
                     return (findPathToGoalFromTree());
                 }
 //                    break;
@@ -57,7 +57,7 @@ public class ZoomyDeterministicSearch {
 //            Node nearest = findNearestNode(random);
 
         // must test adaptive step size, below is an optimization for no step size
-//            Node delta = new Node(random.x - nearest.x, random.y - nearest.y);
+//            Node delta = new Node(  .x - nearest.x, random.y - nearest.y);
 //            delta.setMagnitude(Math.min(Step_Size, delta.getMagnitude()));
 //            Node interpolated = new Node(nearest.x + delta.x, nearest.y + delta.y);
 
@@ -97,7 +97,7 @@ public class ZoomyDeterministicSearch {
             return false;
         }
         addNodeToTree(interpolated, nearest);
-        rewire(interpolated);
+//        rewire(interpolated);
         return true;
     }
 
@@ -246,7 +246,7 @@ public class ZoomyDeterministicSearch {
             rrt.obstacles.add(obstacles[2]);
             rrt.obstacles.add(obstacles[3]);
             fullPath = rrt.graphSearchyThing(new Node(Math.random() + 1, 2 * Math.random() + 1), new Node(14 + Math.random(), 1.84 + 2 * Math.random()));
-//            System.out.println(rrt.tree.nodes.size());
+//            System.out.println(fullPath.size());
         }
         printPath(fullPath);
     }
