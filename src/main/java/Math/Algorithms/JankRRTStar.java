@@ -1,6 +1,6 @@
-package Math.RRT;
+package Math.Algorithms;
 
-import Math.Common.Vector2D;
+import Math.Common.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,36 +13,36 @@ public class JankRRTStar {
     private Tree tree;
     public static int Iterations = 5000;
     public static double thresholdForCompletion = 1;
-    private Node goal;
+    private TreeNode goal;
     private double maxX;
     private double maxY;
-    private Node goalButInList;
+    private TreeNode goalButInList;
     private double minDistance = 0;
 
     public List<Vector2D> allCorners;
     public List<Obstacle> obstacles = new ArrayList<Obstacle>();
 
 
-    public List<Node> rrtStar(Node start, Node goal) {
+    public List<TreeNode> rrtStar(TreeNode start, TreeNode goal) {
 
         this.goal = goal;
         this.tree.root = start;
         this.tree.root.cost = 0.0;
-        this.tree.nodes.add(start);
-        goalButInList = new Node(goal.x, goal.y);
+        this.tree.treeNodes.add(start);
+        goalButInList = new TreeNode(goal.x, goal.y);
 
         for (int i = 0; i < Iterations; i++) {
             for (int j = 0; j < allCorners.size() ; j++) {
                 Vector2D v = allCorners.get(0);
-                Node n = new Node(v.x, v.y);
-                Node nearest = findNearestNode(n);
+                TreeNode n = new TreeNode(v.x, v.y);
+                TreeNode nearest = findNearestNode(n);
                 if (addNodeWithCollisionCheck(nearest, n)) {
                     allCorners.remove(v);
                 }
 
             }
-            Node random = findRandomNode();
-            Node nearest = findNearestNode(random);
+            TreeNode random = findRandomNode();
+            TreeNode nearest = findNearestNode(random);
 
             // must test adaptive step size, below is an optimization for no step size
 //            Node delta = new Node(random.x - nearest.x, random.y - nearest.y);
@@ -69,7 +69,7 @@ public class JankRRTStar {
     }
 
 
-    private boolean hasCollision(Node n1, Node n2) {
+    private boolean hasCollision(TreeNode n1, TreeNode n2) {
         for (Obstacle obstacle : obstacles) {
             if (obstacle.hasCollided(n1, n2)) {
                 return true;
@@ -78,7 +78,7 @@ public class JankRRTStar {
         return false;
     }
 
-    public boolean addNodeWithCollisionCheck(Node nearest, Node interpolated) {
+    public boolean addNodeWithCollisionCheck(TreeNode nearest, TreeNode interpolated) {
 
         if (hasCollision(nearest, interpolated)) {
             return false;
@@ -90,8 +90,8 @@ public class JankRRTStar {
 
 
     private boolean hasGoalBeenReached() {
-        for (Node node : tree.nodes) {
-            if (findDistance(node, goal) < thresholdForCompletion) {
+        for (TreeNode treeNode : tree.treeNodes) {
+            if (findDistance(treeNode, goal) < thresholdForCompletion) {
                 return true;
             }
         }
@@ -99,19 +99,19 @@ public class JankRRTStar {
     }
 
 
-    private Node findRandomNode() {
+    private TreeNode findRandomNode() {
         Random random = new Random();
         double x, y;
         x = random.nextDouble() * maxX;
         y = random.nextDouble() * maxY;
-        return new Node(x, y);
+        return new TreeNode(x, y);
     }
 
 
 
-    private void rewire(Node n) {
-        for (int i = 0; i < tree.nodes.size(); i++) {
-            Node e = tree.nodes.get(i);
+    private void rewire(TreeNode n) {
+        for (int i = 0; i < tree.treeNodes.size(); i++) {
+            TreeNode e = tree.treeNodes.get(i);
             if (e.cost + findDistance(n, e) < n.cost && !hasCollision(n, e)) {
                 tree.prune(n);
                 addNodeToTree(n, e, minDistance);
@@ -121,15 +121,15 @@ public class JankRRTStar {
 
     }
 
-    private Node findNearestNode(Node n) {
+    private TreeNode findNearestNode(TreeNode n) {
         double minDist = Double.POSITIVE_INFINITY;
-        Node nearest = null;
+        TreeNode nearest = null;
 
-        for (Node node : tree.nodes) {
-            minDistance = findDistance(node, n);
+        for (TreeNode treeNode : tree.treeNodes) {
+            minDistance = findDistance(treeNode, n);
             if (minDistance < minDist) {
-                nearest = node;
-                minDist = findDistance(node, n);
+                nearest = treeNode;
+                minDist = findDistance(treeNode, n);
             }
         }
         minDistance = minDist;
@@ -143,23 +143,23 @@ public class JankRRTStar {
     }
 
 
-    private void addNodeToTree(Node n, Node nearestNode) {
-        n.parent = nearestNode;
-        n.cost = nearestNode.cost + findDistance(n, nearestNode);
-        tree.nodes.add(n);
+    private void addNodeToTree(TreeNode n, TreeNode nearestTreeNode) {
+        n.parent = nearestTreeNode;
+        n.cost = nearestTreeNode.cost + findDistance(n, nearestTreeNode);
+        tree.treeNodes.add(n);
 
     }
 
-    private void addNodeToTree(Node n, Node nearestNode, double distance) {
-        n.parent = nearestNode;
-        n.cost = nearestNode.cost + distance;
-        tree.nodes.add(n);
+    private void addNodeToTree(TreeNode n, TreeNode nearestTreeNode, double distance) {
+        n.parent = nearestTreeNode;
+        n.cost = nearestTreeNode.cost + distance;
+        tree.treeNodes.add(n);
 
     }
 
-    private List<Node> findPathToGoalFromTree() {
-        List<Node> output = new ArrayList<Node>();
-        Node current = goalButInList;
+    private List<TreeNode> findPathToGoalFromTree() {
+        List<TreeNode> output = new ArrayList<TreeNode>();
+        TreeNode current = goalButInList;
         while (current != null) {
             output.add(current);
             current = current.parent;
@@ -168,10 +168,10 @@ public class JankRRTStar {
     }
 
 
-    public static void printPath(List<Node> fullPath) {
+    public static void printPath(List<TreeNode> fullPath) {
         for (int j = 0; j < fullPath.size() - 1; j++) {
-            Node current = fullPath.get(j);
-            Node next = fullPath.get(j + 1);
+            TreeNode current = fullPath.get(j);
+            TreeNode next = fullPath.get(j + 1);
             System.out.println("\\operatorname{polygon}\\left(\\left(" + Math.floor(current.x * 1000) / 1000. + "," + Math.floor(current.y * 1000) / 1000 + "\\right),\\left(" + Math.floor(next.x * 1000) / 1000 + "," + Math.floor(next.y * 1000) / 1000 + "\\right)\\right)");
         }
     }
@@ -220,7 +220,7 @@ public class JankRRTStar {
         obstacleArrayList4.add(c2);
         obstacleArrayList4.add(c3);
         obstacleArrayList4.add(c4);
-        List<Node> fullPath = new ArrayList<Node>();
+        List<TreeNode> fullPath = new ArrayList<TreeNode>();
 
         ArrayList<Vector2D> allCorners = new ArrayList<>();
 
@@ -252,7 +252,7 @@ public class JankRRTStar {
             rrt.obstacles.add(obstacles[1]);
             rrt.obstacles.add(obstacles[2]);
             rrt.obstacles.add(obstacles[3]);
-            fullPath = rrt.rrtStar(new Node(Math.random() + 1, 2 * Math.random() + 1), new Node(14 + Math.random(), 1.84 + 2 * Math.random()));
+            fullPath = rrt.rrtStar(new TreeNode(Math.random() + 1, 2 * Math.random() + 1), new TreeNode(14 + Math.random(), 1.84 + 2 * Math.random()));
 //            System.out.println(rrt.tree.nodes.size());
         }
         printPath(fullPath);

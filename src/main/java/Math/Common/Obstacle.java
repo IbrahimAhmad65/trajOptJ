@@ -1,19 +1,16 @@
-package Math.RRT;
-
-import Math.Common.Matrix;
-import Math.Common.Vector2D;
+package Math.Common;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static Math.RRT.JankRRTStar.findDistance;
+import static Math.Algorithms.JankRRTStar.findDistance;
 import static java.lang.Math.*;
 
 public class Obstacle {
 
-    List<Vector2D> corners;
+   public List<Vector2D> corners;
     double THRESHOLD = .01;
-    private final Node cachedNode;
+    private final TreeNode cachedTreeNode;
     public Vector2D center;
     //    Vector2D cache1 = new Vector2D();
 //    Vector2D cache2 = new Vector2D();
@@ -29,7 +26,7 @@ public class Obstacle {
 
     public Obstacle(List<Vector2D> corners) {
         this.corners = corners;
-        cachedNode = new Node(0, 0);
+        cachedTreeNode = new TreeNode(0, 0);
         center = new Vector2D();
         for (Vector2D v : corners) {
             center.add(v);
@@ -126,9 +123,9 @@ public class Obstacle {
             x = scale * (c1 * b2 - c2 * b1);
             y = scale * (c2 * a1 -  c1 * a2);
 //            cache1.setXY(x, y);
-            cachedNode.x = x;
-            cachedNode.y = y;
-            Node intersceptNode = cachedNode;
+            cachedTreeNode.x = x;
+            cachedTreeNode.y = y;
+            TreeNode intersceptTreeNode = cachedTreeNode;
 
 
             if (!Double.isFinite(x) || !Double.isFinite(y)) {
@@ -141,7 +138,7 @@ public class Obstacle {
             xDiff = x-corner2.x;
             yDiff = y - corner2.y;
             boolean checkCorners = Math.abs( rDiff + sqrt(xDiff * xDiff + yDiff * yDiff) - corner1.getDistance(corner2)) < THRESHOLD;
-            boolean checkNodes = Math.abs(findDistance(intersceptNode, n1) + findDistance(intersceptNode, n2) - findDistance(n1, n2)) < THRESHOLD;
+            boolean checkNodes = Math.abs(findDistance(intersceptTreeNode, n1) + findDistance(intersceptTreeNode, n2) - findDistance(n1, n2)) < THRESHOLD;
             if ((checkCorners && checkNodes)) {
 
                 return true;
@@ -165,8 +162,8 @@ public class Obstacle {
         obstacleArrayList.add(c3);
         obstacleArrayList.add(c4);
         Obstacle o = new Obstacle(obstacleArrayList);
-        Node n1 = new Node(0, 0);
-        Node n2 = new Node(1, 1);
+        TreeNode n1 = new TreeNode(0, 0);
+        TreeNode n2 = new TreeNode(1, 1);
         System.out.println(o.hasCollided(n1, n2));
     }
 

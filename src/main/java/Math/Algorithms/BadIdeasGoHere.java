@@ -1,4 +1,4 @@
-package Math.RRT;
+package Math.Algorithms;
 
 import sun.misc.Unsafe;
 
