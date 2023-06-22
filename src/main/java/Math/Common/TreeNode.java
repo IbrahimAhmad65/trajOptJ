@@ -15,6 +15,17 @@ public class TreeNode extends Node{
         this.parent = null;
         children = new ArrayList<>();
     }
+
+    public void setMagnitude(double magnitude){
+        double angle = Math.atan2(y, x);
+        this.x = magnitude * Math.cos(angle);
+        this.y = magnitude * Math.sin(angle);
+    }
+
+    public double getMagnitude(){
+        return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    }
+
     public String toString(){
         return "(" + x + ", " + y + ")";
     }

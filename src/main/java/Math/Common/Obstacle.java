@@ -3,7 +3,7 @@ package Math.Common;
 import java.util.ArrayList;
 import java.util.List;
 
-import static Math.Algorithms.JankRRTStar.findDistance;
+import static Math.Common.GraphNode.findDistance;
 import static java.lang.Math.*;
 
 public class Obstacle {

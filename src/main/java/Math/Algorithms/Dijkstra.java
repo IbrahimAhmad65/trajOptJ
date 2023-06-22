@@ -144,7 +144,8 @@ public class Dijkstra {
         }
         GraphNode n1 = null;
         GraphNode n2 = null;
-        for (int z = 0; z < 10000000; z++) {
+        List<GraphNode> n = null;
+        for (int z = 0; z < 1000000; z++) {
             if(n1 != null){
                 graphNodes.remove(n1);
                 graphNodes.remove(n2);
@@ -169,13 +170,16 @@ public class Dijkstra {
             g.listOfNodes = graphNodes;
             Dijkstra dijkstra = new Dijkstra();
 //            System.out.println("fhsjklhdjghfdghjlhsfld");
-            dijkstra.aStarIThinkNotReallySureMaybe(g,start,end);
+            n = dijkstra.aStarIThinkNotReallySureMaybe(g,start,end);
+//                 dijkstra.aStarIThinkNotReallySureMaybe(g,start,end);
+
             n1 = start;
             n2 = end;
 //            printPath( dijkstra.dijkstra(g,graphNodes.get(0),graphNodes.get(graphNodes.size()-1)));
 //            dijkstra.dijkstra(g, graphNodes.get(0), graphNodes.get(graphNodes.size() - 1));
 
         }
+        Graph.printPath(n);
 
 
     }
